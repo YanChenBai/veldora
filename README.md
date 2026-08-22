@@ -82,6 +82,25 @@ export default defineConfig({
 })
 ```
 
+During development, the renderer server enables Vite's interactive CLI shortcuts. Press `h + enter` to list them. Restarting with `r` restarts both the Vite server and the Electron app, while `q` closes both processes.
+
+Browser runtime errors and `console.warn` / `console.error` calls are forwarded to the terminal by default through Vite's `server.forwardConsole`. You can disable or customize it in the renderer config:
+
+```ts
+export default defineConfig({
+  main: {},
+  preload: {},
+  renderer: {
+    server: {
+      forwardConsole: {
+        unhandledErrors: true,
+        logLevels: ['warn', 'error']
+      }
+    }
+  }
+})
+```
+
 ### Getting Started
 
 Clone the [electron-vite-boilerplate](https://github.com/alex8088/electron-vite-boilerplate) or use the [create-electron](https://github.com/alex8088/quick-start/tree/master/packages/create-electron) tool to scaffold your project.

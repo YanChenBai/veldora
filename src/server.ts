@@ -24,6 +24,19 @@ export async function createServer(
     let server: ViteDevServer | undefined
     let ps: ChildProcess | undefined
 
+    const stopElectron = (): void => {
+      if (ps) {
+        ps.removeAllListeners()
+        ps.kill()
+        ps = undefined
+      }
+    }
+
+    const restartElectron = (): void => {
+      stopElectron()
+      ps = startElectron(inlineConfig.root)
+    }
+
     const errorHook = (e): void => {
       logger.error(`${colors.bgRed(colors.white(' ERROR '))} ${colors.red(e.message)}`)
     }
@@ -34,9 +47,7 @@ export async function createServer(
         logger.info(colors.green(`\nelectron main process rebuilt successfully`))
 
         if (ps) {
-          ps.removeAllListeners()
-          ps.kill()
-          ps = startElectron(inlineConfig.root)
+          restartElectron()
 
           logger.info(colors.green(`\nrestarting electron app...\n`))
         }
@@ -76,6 +87,9 @@ export async function createServer(
     if (rendererViteConfig) {
       logger.info(colors.gray(`\n-----\n`))
 
+      rendererViteConfig.server ??= {}
+      rendererViteConfig.server.forwardConsole ??= true
+
       server = await viteCreateServer(rendererViteConfig)
 
       if (!server.httpServer) {
@@ -84,12 +98,7 @@ export async function createServer(
 
       await server.listen()
 
-      const conf = server.config.server
-
-      const protocol = conf.https ? 'https:' : 'http:'
-      const host = resolveHostname(conf.host)
-      const port = conf.port
-      process.env.ELECTRON_RENDERER_URL = `${protocol}//${host}:${port}`
+      setRendererUrl(server)
 
       const slogger = server.config.logger
 
@@ -103,7 +112,43 @@ export async function createServer(
     ps = startElectron(inlineConfig.root)
 
     logger.info(colors.green(`\nstarting electron app...\n`))
+
+    server?.bindCLIShortcuts({
+      print: true,
+      customShortcuts: [
+        {
+          key: 'r',
+          description: 'restart the server and electron app',
+          async action(server): Promise<void> {
+            await server.restart()
+            setRendererUrl(server)
+            restartElectron()
+            server.printUrls()
+          }
+        },
+        {
+          key: 'q',
+          description: 'quit',
+          async action(server): Promise<void> {
+            try {
+              stopElectron()
+              await server.close()
+            } finally {
+              process.exit()
+            }
+          }
+        }
+      ]
+    })
   }
+}
+
+function setRendererUrl(server: ViteDevServer): void {
+  const conf = server.config.server
+  const protocol = conf.https ? 'https:' : 'http:'
+  const host = resolveHostname(conf.host)
+  const port = conf.port
+  process.env.ELECTRON_RENDERER_URL = `${protocol}//${host}:${port}`
 }
 
 type UserConfig = ViteConfig & { configFile?: string | false }
