@@ -25,6 +25,17 @@
 <br />
 <br />
 
+## About This Fork
+
+This repository is a fork of [alex8088/electron-vite](https://github.com/alex8088/electron-vite) focused on Vite+ integration while staying close to upstream.
+
+Additions in this fork:
+
+- Load Electron targets from a unified Vite+ `vite.config.ts`.
+- Share Vite+ resolve options, including `tsconfigPaths`, across main, preload and renderer.
+- Provide Vite's interactive development shortcuts with coordinated Electron restart and shutdown.
+- Forward browser errors and warning/error console output to the development terminal by default.
+
 ## Features
 
 - ⚡️ [Vite](https://vitejs.dev) powered and use the same way.
