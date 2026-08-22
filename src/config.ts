@@ -82,7 +82,20 @@ interface PreloadBuildOptions extends ViteBuildOptions, ExternalizeDepsMixin, By
 
 interface RendererBuildOptions extends ViteBuildOptions, IsolatedEntriesMixin {}
 
-interface BaseViteConfig<T> extends Omit<ViteConfig, 'build'> {
+export type ResolveOptions = NonNullable<ViteConfig['resolve']> & {
+  /**
+   * Enable native resolution of compiler paths from tsconfig files.
+   *
+   * @see https://viteplus.dev/
+   */
+  tsconfigPaths?: boolean
+}
+
+interface BaseViteConfig<T> extends Omit<ViteConfig, 'build' | 'resolve'> {
+  /**
+   * Resolve options, including Vite+ extensions.
+   */
+  resolve?: ResolveOptions
   /**
    * Build specific options
    */
@@ -96,6 +109,13 @@ export interface PreloadViteConfig extends BaseViteConfig<PreloadBuildOptions> {
 export interface RendererViteConfig extends BaseViteConfig<RendererBuildOptions> {}
 
 export interface UserConfig {
+  /**
+   * Shared resolve options for the electron main, preload and renderer processes.
+   *
+   * This includes Vite+ resolve extensions such as `resolve.tsconfigPaths` when
+   * the project uses Vite+ as its Vite implementation.
+   */
+  resolve?: ResolveOptions
   /**
    * Vite config options for electron main process
    *
@@ -128,7 +148,7 @@ export type ElectronViteConfigExport =
   | ElectronViteConfigFn
 
 /**
- * Type helper to make it easier to use `electron.vite.config.*`
+ * Type helper to make it easier to use `vite.config.*` or `electron.vite.config.*`
  * accepts a direct {@link UserConfig} object, or a function that returns it.
  * The function receives a object that exposes two properties:
  * `command` (either `'build'` or `'serve'`), and `mode`.
@@ -192,18 +212,27 @@ export async function resolveConfig(
 
       const outDir = config.build?.outDir
 
-      const { main, preload, renderer } = loadResult.config
+      const { resolve, main, preload, renderer } = loadResult.config
 
       if (main) {
-        userConfig.main = await new MainConfigFactory(main, config, { outDir, root }).build()
+        userConfig.main = await new MainConfigFactory(mergeSharedResolve(resolve, main), config, {
+          outDir,
+          root
+        }).build()
       }
 
       if (preload) {
-        userConfig.preload = await new PreloadConfigFactory(preload, config, { outDir, root }).build()
+        userConfig.preload = await new PreloadConfigFactory(mergeSharedResolve(resolve, preload), config, {
+          outDir,
+          root
+        }).build()
       }
 
       if (renderer) {
-        userConfig.renderer = await new RendererConfigFactory(renderer, config, { outDir, root }).build()
+        userConfig.renderer = await new RendererConfigFactory(mergeSharedResolve(resolve, renderer), config, {
+          outDir,
+          root
+        }).build()
       }
 
       configFile = loadResult.path
@@ -218,6 +247,13 @@ export async function resolveConfig(
   }
 
   return resolved
+}
+
+function mergeSharedResolve<T extends MainViteConfig | PreloadViteConfig | RendererViteConfig>(
+  resolve: ResolveOptions | undefined,
+  targetConfig: T
+): T {
+  return resolve ? (mergeConfig({ resolve }, targetConfig as ViteConfig) as T) : targetConfig
 }
 
 export abstract class ConfigFactory<T extends MainViteConfig | PreloadViteConfig | RendererViteConfig> {
@@ -370,6 +406,7 @@ function isOptions<T extends object>(value: boolean | T): value is T {
 }
 
 const CONFIG_FILE_NAME = 'electron.vite.config'
+const VITE_CONFIG_FILE_NAME = 'vite.config'
 
 export async function loadConfigFromFile(
   configEnv: ConfigEnv,
@@ -382,13 +419,9 @@ export async function loadConfigFromFile(
   config: UserConfig
   dependencies: string[]
 }> {
-  if (configFile && /^vite.config.(js|ts|mjs|cjs|mts|cts)$/.test(configFile)) {
-    throw new Error(`config file cannot be named ${configFile}.`)
-  }
-
   const resolvedPath = configFile
     ? path.resolve(configFile)
-    : findConfigFile(configRoot, ['js', 'ts', 'mjs', 'cjs', 'mts', 'cts'])
+    : findConfigFile(configRoot, [CONFIG_FILE_NAME, VITE_CONFIG_FILE_NAME], ['js', 'ts', 'mjs', 'cjs', 'mts', 'cts'])
 
   if (!resolvedPath) {
     return {
@@ -429,11 +462,13 @@ export async function loadConfigFromFile(
   }
 }
 
-function findConfigFile(configRoot: string, extensions: string[]): string {
-  for (const ext of extensions) {
-    const configFile = path.resolve(configRoot, `${CONFIG_FILE_NAME}.${ext}`)
-    if (fs.existsSync(configFile)) {
-      return configFile
+function findConfigFile(configRoot: string, names: string[], extensions: string[]): string {
+  for (const name of names) {
+    for (const ext of extensions) {
+      const configFile = path.resolve(configRoot, `${name}.${ext}`)
+      if (fs.existsSync(configFile)) {
+        return configFile
+      }
     }
   }
   return ''

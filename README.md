@@ -61,21 +61,25 @@ In a project where `electron-vite` is installed, you can use `electron-vite` bin
 
 ### Configuration
 
-When running `electron-vite` from the command line, electron-vite will automatically try to resolve a config file named `electron.vite.config.js` inside project root. The most basic config file looks like this:
+When running `electron-vite` from the command line, electron-vite will automatically try to resolve `electron.vite.config.*` or `vite.config.*` inside the project root. When both exist, `electron.vite.config.*` takes precedence.
 
-```js
-// electron.vite.config.js
-export default {
-  main: {
-    // vite config options
+Vite+ projects can keep the Electron targets and shared resolve options in a single `vite.config.ts`. The shared `resolve` options are applied to main, preload and renderer; options declared by an individual target take precedence.
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'electron-vite'
+
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true,
+    alias: {
+      '@': './src'
+    }
   },
-  preload: {
-    // vite config options
-  },
-  renderer: {
-    // vite config options
-  }
-}
+  main: {},
+  preload: {},
+  renderer: {}
+})
 ```
 
 ### Getting Started
