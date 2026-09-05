@@ -1,6 +1,6 @@
 {
   "name": "@byc/electron-vite-plus",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Electron build tooling based on Vite",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,7 +13,8 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "electron-vite": "bin/electron-vite.js"
+    "electron-vite-plus": "bin/electron-vite.js",
+    "evp": "bin/electron-vite.js"
   },
   "files": [
     "bin",
