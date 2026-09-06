@@ -1,3 +1,6 @@
+import 'vite'
+import type { ElectronConfig } from './dist/index.mjs'
+
 // node worker
 declare module '*?nodeWorker' {
   import type { Worker, WorkerOptions } from 'node:worker_threads'
@@ -39,74 +42,94 @@ declare module '*.wasm?loader' {
   export default loadWasm
 }
 
-// build-in process env
-declare namespace NodeJS {
-  interface ProcessEnv {
+declare module 'vite' {
+  interface UserConfig {
     /**
-     * Vite's dev server address for Electron renderers.
+     * Vite config options for the electron main, preload and renderer processes.
      */
-    readonly ELECTRON_RENDERER_URL?: string
+    electron?: ElectronConfig
   }
 }
 
-// Refer to Vite's ImportMeta type declarations
-// <https://github.com/vitejs/vite/blob/main/packages/vite/types/importMeta.d.ts>
+declare global {
+  // build-in process env
+  namespace NodeJS {
+    interface ProcessEnv {
+      /**
+       * Vite's dev server address for Electron renderers.
+       */
+      readonly ELECTRON_RENDERER_URL?: string
+    }
+  }
 
-interface ImportMetaEnv {
-  MODE: string
-  DEV: boolean
-  PROD: boolean
-}
+  // Refer to Vite's ImportMeta type declarations
+  // <https://github.com/vitejs/vite/blob/main/packages/vite/types/importMeta.d.ts>
 
-interface ImportGlobOptions<Eager extends boolean, AsType extends string> {
-  /**
-   * Import type for the import url.
-   */
-  as?: AsType
-  /**
-   * Import as static or dynamic
-   *
-   * @default false
-   */
-  eager?: Eager
-  /**
-   * Import only the specific named export. Set to `default` to import the default export.
-   */
-  import?: string
-  /**
-   * Custom queries
-   */
-  query?: string | Record<string, string | number | boolean>
-  /**
-   * Search files also inside `node_modules/` and hidden directories (e.g. `.git/`). This might have impact on performance.
-   *
-   * @default false
-   */
-  exhaustive?: boolean
-}
+  interface ImportMetaEnv {
+    MODE: string
+    DEV: boolean
+    PROD: boolean
+  }
 
-interface KnownAsTypeMap {
-  raw: string
-  url: string
-  worker: Worker
-}
+  interface ImportGlobOptions<Eager extends boolean, AsType extends string> {
+    /**
+     * Import type for the import url.
+     */
+    as?: AsType
+    /**
+     * Import as static or dynamic
+     *
+     * @default false
+     */
+    eager?: Eager
+    /**
+     * Import only the specific named export. Set to `default` to import the default export.
+     */
+    import?: string
+    /**
+     * Custom queries
+     */
+    query?: string | Record<string, string | number | boolean>
+    /**
+     * Search files also inside `node_modules/` and hidden directories (e.g. `.git/`). This might have impact on performance.
+     *
+     * @default false
+     */
+    exhaustive?: boolean
+  }
 
-interface ImportGlobFunction {
-  /**
-   * Import a list of files with a glob pattern.
-   *
-   * https://vitejs.dev/guide/features.html#glob-import
-   */
-  <Eager extends boolean, As extends string, T = As extends keyof KnownAsTypeMap ? KnownAsTypeMap[As] : unknown>(
-    glob: string | string[],
-    options?: ImportGlobOptions<Eager, As>
-  ): (Eager extends true ? true : false) extends true ? Record<string, T> : Record<string, () => Promise<T>>
-  <M>(glob: string | string[], options?: ImportGlobOptions<false, string>): Record<string, () => Promise<M>>
-  <M>(glob: string | string[], options: ImportGlobOptions<true, string>): Record<string, M>
-}
+  interface KnownAsTypeMap {
+    raw: string
+    url: string
+    worker: Worker
+  }
 
-interface ImportMeta {
-  url: string
-  readonly env: ImportMetaEnv
-  glob: ImportGlobFunction
+  interface ImportGlobFunction {
+    /**
+     * Import a list of files with a glob pattern.
+     *
+     * https://vitejs.dev/guide/features.html#glob-import
+     */
+    <
+      Eager extends boolean,
+      As extends string,
+      T = As extends keyof KnownAsTypeMap ? KnownAsTypeMap[As] : unknown
+    >(
+      glob: string | string[],
+      options?: ImportGlobOptions<Eager, As>
+    ): (Eager extends true ? true : false) extends true
+      ? Record<string, T>
+      : Record<string, () => Promise<T>>
+    <M>(
+      glob: string | string[],
+      options?: ImportGlobOptions<false, string>
+    ): Record<string, () => Promise<M>>
+    <M>(glob: string | string[], options: ImportGlobOptions<true, string>): Record<string, M>
+  }
+
+  interface ImportMeta {
+    url: string
+    readonly env: ImportMetaEnv
+    glob: ImportGlobFunction
+  }
 }

@@ -41,7 +41,7 @@ export async function createServer(
       logger.error(`${colors.bgRed(colors.white(' ERROR '))} ${colors.red(e.message)}`)
     }
 
-    const mainViteConfig = config.config?.main
+    const mainViteConfig = config.config?.electron?.main
     if (mainViteConfig && !options.rendererOnly) {
       const watchHook = (): void => {
         logger.info(colors.green(`\nelectron main process rebuilt successfully`))
@@ -58,7 +58,7 @@ export async function createServer(
       logger.info(colors.green(`\nelectron main process built successfully`))
     }
 
-    const preloadViteConfig = config.config?.preload
+    const preloadViteConfig = config.config?.electron?.preload
     if (preloadViteConfig && !options.rendererOnly) {
       logger.info(colors.gray(`\n-----\n`))
 
@@ -83,7 +83,7 @@ export async function createServer(
       )
     }
 
-    const rendererViteConfig = config.config?.renderer
+    const rendererViteConfig = config.config?.electron?.renderer
     if (rendererViteConfig) {
       logger.info(colors.gray(`\n-----\n`))
 
@@ -153,8 +153,12 @@ function setRendererUrl(server: ViteDevServer): void {
 
 type UserConfig = ViteConfig & { configFile?: string | false }
 
-async function doBuild(config: UserConfig, watchHook: () => void, errorHook: (e: Error) => void): Promise<void> {
-  return new Promise(resolve => {
+async function doBuild(
+  config: UserConfig,
+  watchHook: () => void,
+  errorHook: (e: Error) => void
+): Promise<void> {
+  return new Promise((resolve) => {
     if (config.build?.watch) {
       let firstBundle = true
       const closeBundle = (): void => {
@@ -182,6 +186,6 @@ async function doBuild(config: UserConfig, watchHook: () => void, errorHook: (e:
           resolve()
         }
       })
-      .catch(e => errorHook(e))
+      .catch((e) => errorHook(e))
   })
 }

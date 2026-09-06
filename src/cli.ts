@@ -4,7 +4,7 @@ import { type LogLevel, createLogger } from 'vite'
 import type { InlineConfig } from './config'
 import { version } from '../package.json'
 
-const cli = cac('electron-vite')
+const cli = cac('veldora')
 
 // global options
 interface GlobalCLIOptions {
@@ -74,7 +74,10 @@ cli
   .command('[root]', 'start dev server and electron app')
   .alias('serve')
   .alias('dev')
-  .option('-w, --watch', `[boolean] rebuilds when main process or preload script modules have changed on disk`)
+  .option(
+    '-w, --watch',
+    `[boolean] rebuilds when main process or preload script modules have changed on disk`
+  )
   .option('--inspect [port]', `[boolean | number] enable V8 inspector on the specified port`)
   .option('--inspectBrk [port]', `[boolean | number] enable V8 inspector on the specified port`)
   .option('--remoteDebuggingPort <port>', `[string] port for remote debugging`)
@@ -86,11 +89,13 @@ cli
     }
 
     if (options.inspect) {
-      process.env.V8_INSPECTOR_PORT = typeof options.inspect === 'number' ? `${options.inspect}` : '5858'
+      process.env.V8_INSPECTOR_PORT =
+        typeof options.inspect === 'number' ? `${options.inspect}` : '5858'
     }
 
     if (options.inspectBrk) {
-      process.env.V8_INSPECTOR_BRK_PORT = typeof options.inspectBrk === 'number' ? `${options.inspectBrk}` : '5858'
+      process.env.V8_INSPECTOR_BRK_PORT =
+        typeof options.inspectBrk === 'number' ? `${options.inspectBrk}` : '5858'
     }
 
     if (options.noSandbox) {
@@ -121,22 +126,26 @@ cli
   })
 
 // build
-cli.command('build [root]', 'build for production').action(async (root: string, options: GlobalCLIOptions) => {
-  const { build } = await import('./build')
-  const inlineConfig = createInlineConfig(root, options)
+cli
+  .command('build [root]', 'build for production')
+  .action(async (root: string, options: GlobalCLIOptions) => {
+    const { build } = await import('./build')
+    const inlineConfig = createInlineConfig(root, options)
 
-  if (options.entry) {
-    process.env.ELECTRON_ENTRY = options.entry
-  }
+    if (options.entry) {
+      process.env.ELECTRON_ENTRY = options.entry
+    }
 
-  try {
-    await build(inlineConfig)
-  } catch (e) {
-    const error = e as Error
-    createLogger(options.logLevel).error(colors.red(`error during build:\n${error.stack}`), { error })
-    process.exit(1)
-  }
-})
+    try {
+      await build(inlineConfig)
+    } catch (e) {
+      const error = e as Error
+      createLogger(options.logLevel).error(colors.red(`error during build:\n${error.stack}`), {
+        error
+      })
+      process.exit(1)
+    }
+  })
 
 // preview
 cli
@@ -163,7 +172,10 @@ cli
       await preview(inlineConfig, { skipBuild: options.skipBuild })
     } catch (e) {
       const error = e as Error
-      createLogger(options.logLevel).error(colors.red(`error during preview electron app:\n${error.stack}`), { error })
+      createLogger(options.logLevel).error(
+        colors.red(`error during preview electron app:\n${error.stack}`),
+        { error }
+      )
       process.exit(1)
     }
   })

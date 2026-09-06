@@ -18,11 +18,11 @@ export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | n
   let deps = Object.keys(pkg.dependencies || {})
 
   if (include.length) {
-    deps = deps.concat(include.filter(dep => dep.trim() !== ''))
+    deps = deps.concat(include.filter((dep) => dep.trim() !== ''))
   }
 
   if (exclude.length) {
-    deps = deps.filter(dep => !exclude.includes(dep))
+    deps = deps.filter((dep) => !exclude.includes(dep))
   }
 
   deps = [...new Set(deps)]

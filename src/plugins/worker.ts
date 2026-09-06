@@ -1,6 +1,6 @@
 import type { Plugin } from 'vite'
-import type { SourceMapInput } from 'rollup'
 import MagicString from 'magic-string'
+import type { SourceMap } from 'magic-string'
 import { cleanUrl, toRelativePath } from '../utils'
 
 const nodeWorkerAssetUrlRE = /__VITE_NODE_WORKER_ASSET__([\w$]+)__/g
@@ -36,7 +36,7 @@ export default function workerPlugin(): Plugin {
         }
       }
     },
-    renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap }): { code: string; map: SourceMap | null } | null {
       let match: RegExpExecArray | null
       let s: MagicString | undefined
 

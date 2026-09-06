@@ -2,7 +2,14 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { builtinModules } from 'node:module'
 import colors from 'picocolors'
-import { type Plugin, type LibraryOptions, type Rolldown, type UserConfig, mergeConfig, normalizePath } from 'vite'
+import {
+  type Plugin,
+  type LibraryOptions,
+  type Rolldown,
+  type UserConfig,
+  mergeConfig,
+  normalizePath
+} from 'vite'
 import { getElectronNodeTarget, getElectronChromeTarget, supportESM } from '../electron'
 import { loadPackageData } from '../utils'
 
@@ -44,7 +51,7 @@ function resolveBuildOutputs(
 ): Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined {
   if (libOptions && !Array.isArray(outputs)) {
     const libFormats = libOptions.formats || []
-    return libFormats.map(format => ({ ...outputs, format }))
+    return libFormats.map((format) => ({ ...outputs, format }))
   }
   return outputs
 }
@@ -69,7 +76,11 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
           target: nodeTarget,
           assetsDir: 'chunks',
           rolldownOptions: {
-            external: ['electron', /^electron\/.+/, ...builtinModules.flatMap(m => [m, `node:${m}`])],
+            external: [
+              'electron',
+              /^electron\/.+/,
+              ...builtinModules.flatMap((m) => [m, `node:${m}`])
+            ],
             output: {}
           },
           reportCompressedSize: false,
@@ -87,7 +98,11 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
           formats:
             libOptions && libOptions.formats && libOptions.formats.length > 0
               ? []
-              : [outputOptions && !Array.isArray(outputOptions) && outputOptions.format ? outputOptions.format : format]
+              : [
+                  outputOptions && !Array.isArray(outputOptions) && outputOptions.format
+                    ? outputOptions.format
+                    : format
+                ]
         }
       } else {
         defaultConfig.build.rolldownOptions.output['format'] = format
@@ -114,7 +129,10 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
       // enable ssr build
       config.build.ssr = true
       config.build.ssrEmitAssets = true
-      config.ssr = { ...config.ssr, ...{ noExternal: true } }
+      config.ssr = {
+        ...config.ssr,
+        noExternal: true
+      }
 
       config.build.rollupOptions = config.build.rolldownOptions
     }
@@ -132,7 +150,7 @@ export function electronMainConfigValidatorPlugin(): Plugin {
         throw new Error('build.target option is required in the electron vite main config.')
       } else {
         const targets = Array.isArray(build.target) ? build.target : [build.target]
-        if (targets.some(t => !t.startsWith('node'))) {
+        if (targets.some((t) => !t.startsWith('node'))) {
           throw new Error('The electron vite main config build.target option must be "node?".')
         }
       }
@@ -200,7 +218,11 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
           target: nodeTarget,
           assetsDir: 'chunks',
           rolldownOptions: {
-            external: ['electron', /^electron\/.+/, ...builtinModules.flatMap(m => [m, `node:${m}`])],
+            external: [
+              'electron',
+              /^electron\/.+/,
+              ...builtinModules.flatMap((m) => [m, `node:${m}`])
+            ],
             output: {}
           },
           reportCompressedSize: false,
@@ -218,7 +240,11 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
           formats:
             libOptions && libOptions.formats && libOptions.formats.length > 0
               ? []
-              : [outputOptions && !Array.isArray(outputOptions) && outputOptions.format ? outputOptions.format : format]
+              : [
+                  outputOptions && !Array.isArray(outputOptions) && outputOptions.format
+                    ? outputOptions.format
+                    : format
+                ]
         }
       } else {
         defaultConfig.build.rolldownOptions.output['format'] = format
@@ -232,14 +258,17 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
       const buildConfig = mergeConfig(defaultConfig.build, build)
       config.build = buildConfig
 
-      const resolvedOutputs = resolveBuildOutputs(config.build.rolldownOptions!.output, config.build.lib || false)
+      const resolvedOutputs = resolveBuildOutputs(
+        config.build.rolldownOptions!.output,
+        config.build.lib || false
+      )
 
       if (resolvedOutputs) {
         const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
 
         if (outputs.find(({ format }) => format === 'es')) {
           if (Array.isArray(config.build.rolldownOptions!.output)) {
-            config.build.rolldownOptions!.output.forEach(output => {
+            config.build.rolldownOptions!.output.forEach((output) => {
               if (output.format === 'es') {
                 output['entryFileNames'] = '[name].mjs'
                 output['chunkFileNames'] = '[name]-[hash].mjs'
@@ -249,7 +278,10 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
             config.build.rolldownOptions!.output!['entryFileNames'] = '[name].mjs'
             config.build.rolldownOptions!.output!['chunkFileNames'] = config.build.lib
               ? '[name]-[hash].mjs'
-              : path.posix.join(build.assetsDir || defaultConfig.build.assetsDir, '[name]-[hash].mjs')
+              : path.posix.join(
+                  build.assetsDir || defaultConfig.build.assetsDir,
+                  '[name]-[hash].mjs'
+                )
           }
         }
       }
@@ -286,7 +318,7 @@ export function electronPreloadConfigValidatorPlugin(): Plugin {
         throw new Error('build.target option is required in the electron vite preload config.')
       } else {
         const targets = Array.isArray(build.target) ? build.target : [build.target]
-        if (targets.some(t => !t.startsWith('node'))) {
+        if (targets.some((t) => !t.startsWith('node'))) {
           throw new Error('The electron vite preload config build.target must be "node?".')
         }
       }
@@ -336,7 +368,9 @@ export function electronRendererConfigPresetPlugin(options?: ElectronPluginOptio
       const root = options?.root || process.cwd()
 
       config.base =
-        config.mode === 'production' || process.env.NODE_ENV_ELECTRON_VITE === 'production' ? './' : config.base
+        config.mode === 'production' || process.env.NODE_ENV_ELECTRON_VITE === 'production'
+          ? './'
+          : config.base
       config.root = config.root || './src/renderer'
 
       const chromeTarget = getElectronChromeTarget()
@@ -389,7 +423,9 @@ export function electronRendererConfigValidatorPlugin(): Plugin {
     enforce: 'post',
     configResolved(config): void {
       if (config.base !== './' && config.base !== '/') {
-        config.logger.warn(colors.yellow('(!) Should not set "base" option for the electron vite renderer config.'))
+        config.logger.warn(
+          colors.yellow('(!) Should not set "base" option for the electron vite renderer config.')
+        )
       }
 
       const build = config.build
@@ -397,7 +433,7 @@ export function electronRendererConfigValidatorPlugin(): Plugin {
         throw new Error('build.target option is required in the electron vite renderer config.')
       } else {
         const targets = Array.isArray(build.target) ? build.target : [build.target]
-        if (targets.some(t => !t.startsWith('chrome') && !/^es((202\d{1})|next)$/.test(t))) {
+        if (targets.some((t) => !t.startsWith('chrome') && !/^es((202\d{1})|next)$/.test(t))) {
           config.logger.warn(
             'The electron vite renderer config build.target is not "chrome?" or "es?". This could be a mistake.'
           )
@@ -406,7 +442,9 @@ export function electronRendererConfigValidatorPlugin(): Plugin {
 
       const rolldownOptions = build.rolldownOptions
       if (!rolldownOptions.input) {
-        config.logger.warn(colors.yellow(`index.html file is not found in ${colors.dim('/src/renderer')} directory.`))
+        config.logger.warn(
+          colors.yellow(`index.html file is not found in ${colors.dim('/src/renderer')} directory.`)
+        )
         throw new Error(
           'build.rollupOptions.input or build.rolldownOptions.input option is required in the electron vite renderer config.'
         )

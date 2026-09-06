@@ -1,4 +1,10 @@
-import { type Plugin, type InlineConfig, type Rolldown, build as viteBuild, mergeConfig } from 'vite'
+import {
+  type Plugin,
+  type InlineConfig,
+  type Rolldown,
+  build as viteBuild,
+  mergeConfig
+} from 'vite'
 import MagicString from 'magic-string'
 import { cleanUrl, toRelativePath } from '../utils'
 import { supportImportMetaPaths } from '../electron'
@@ -91,7 +97,10 @@ export default function modulePathPlugin(factory: ConfigFactory<MainViteConfig>)
   }
 }
 
-async function bundleEntryFile(input: string, config: InlineConfig): Promise<Rolldown.RolldownOutput> {
+async function bundleEntryFile(
+  input: string,
+  config: InlineConfig
+): Promise<Rolldown.RolldownOutput> {
   const viteConfig = mergeConfig(config, {
     build: {
       write: false,

@@ -13,7 +13,11 @@ import { toRelativePath } from '../utils'
 const _require = createRequire(import.meta.url)
 
 function getBytecodeCompilerPath(): string {
-  return path.join(path.dirname(_require.resolve('electron-vite/package.json')), 'bin', 'electron-bytecode.cjs')
+  return path.join(
+    path.dirname(_require.resolve('veldorajs/package.json')),
+    'bin',
+    'veldora-bytecode.cjs'
+  )
 }
 
 function compileToBytecode(code: string): Promise<Buffer> {
@@ -34,10 +38,10 @@ function compileToBytecode(code: string): Promise<Buffer> {
     }
 
     if (proc.stdout) {
-      proc.stdout.on('data', chunk => {
+      proc.stdout.on('data', (chunk) => {
         data = Buffer.concat([data, chunk])
       })
-      proc.stdout.on('error', err => {
+      proc.stdout.on('error', (err) => {
         console.error(err)
       })
       proc.stdout.on('end', () => {
@@ -46,18 +50,18 @@ function compileToBytecode(code: string): Promise<Buffer> {
     }
 
     if (proc.stderr) {
-      proc.stderr.on('data', chunk => {
+      proc.stderr.on('data', (chunk) => {
         console.error('Error: ', chunk.toString())
       })
-      proc.stderr.on('error', err => {
+      proc.stderr.on('error', (err) => {
         console.error('Error: ', err)
       })
     }
 
-    proc.addListener('message', message => console.log(message))
-    proc.addListener('error', err => console.error(err))
+    proc.addListener('message', (message) => console.log(message))
+    proc.addListener('error', (err) => console.error(err))
 
-    proc.on('error', err => reject(err))
+    proc.on('error', (err) => reject(err))
     proc.on('exit', () => {
       resolve(data)
     })
@@ -158,12 +162,17 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     return null
   }
 
-  const { chunkAlias = [], transformArrowFunctions = true, removeBundleJS = true, protectedStrings = [] } = options
+  const {
+    chunkAlias = [],
+    transformArrowFunctions = true,
+    removeBundleJS = true,
+    protectedStrings = []
+  } = options
   const _chunkAlias = Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
 
   const transformAllChunks = _chunkAlias.length === 0
   const isBytecodeChunk = (chunkName: string): boolean => {
-    return transformAllChunks || _chunkAlias.some(alias => alias === chunkName)
+    return transformAllChunks || _chunkAlias.some((alias) => alias === chunkName)
   }
 
   const plugins: babel.PluginItem[] = []
@@ -199,7 +208,9 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       if (supported) {
         return
       }
-      const useInRenderer = config.plugins.some(p => p.name === 'vite:electron-renderer-preset-config')
+      const useInRenderer = config.plugins.some(
+        (p) => p.name === 'vite:electron-renderer-preset-config'
+      )
       if (useInRenderer) {
         config.logger.warn(colors.yellow('bytecodePlugin does not support renderer.'))
         return
@@ -220,7 +231,11 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         supported = output.format === 'cjs' && !useInRenderer
       }
     },
-    renderChunk(code, chunk, { sourcemap }): { code: string; map?: Rolldown.SourceMapInput } | null {
+    renderChunk(
+      code,
+      chunk,
+      { sourcemap }
+    ): { code: string; map?: Rolldown.SourceMapInput } | null {
       if (supported && isBytecodeChunk(chunk.name) && shouldTransformBytecodeChunk) {
         return _transform(code, !!sourcemap)
       }
@@ -232,17 +247,19 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       }
       const _chunks = Object.values(output)
       const chunks = _chunks.filter(
-        chunk => chunk.type === 'chunk' && isBytecodeChunk(chunk.name)
+        (chunk) => chunk.type === 'chunk' && isBytecodeChunk(chunk.name)
       ) as Rolldown.OutputChunk[]
 
       if (chunks.length === 0) {
         return
       }
 
-      const bytecodeChunks = chunks.map(chunk => chunk.fileName)
-      const nonEntryChunks = chunks.filter(chunk => !chunk.isEntry).map(chunk => path.basename(chunk.fileName))
+      const bytecodeChunks = chunks.map((chunk) => chunk.fileName)
+      const nonEntryChunks = chunks
+        .filter((chunk) => !chunk.isEntry)
+        .map((chunk) => path.basename(chunk.fileName))
 
-      const pattern = nonEntryChunks.map(chunk => `(${chunk})`).join('|')
+      const pattern = nonEntryChunks.map((chunk) => `(${chunk})`).join('|')
       const bytecodeRE = pattern ? new RegExp(`require\\(\\S*(?=(${pattern})\\S*\\))`, 'g') : null
 
       const getBytecodeLoaderBlock = (chunkFileName: string): string => {
@@ -254,7 +271,7 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
       const bundles = Object.keys(output)
 
       await Promise.all(
-        bundles.map(async name => {
+        bundles.map(async (name) => {
           const chunk = output[name]
           if (chunk.type === 'chunk') {
             let _code = chunk.code
@@ -325,7 +342,10 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
         })
       )
 
-      if (bytecodeChunkCount && !_chunks.some(ass => ass.type === 'asset' && ass.fileName === bytecodeModuleLoader)) {
+      if (
+        bytecodeChunkCount &&
+        !_chunks.some((ass) => ass.type === 'asset' && ass.fileName === bytecodeModuleLoader)
+      ) {
         this.emitFile({
           type: 'asset',
           source: bytecodeModuleLoaderCode.join('\n') + '\n',
@@ -336,8 +356,12 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     },
     writeBundle(_, output): void {
       if (supported) {
-        const bytecodeChunkCount = Object.keys(output).filter(chunk => bytecodeChunkExtensionRE.test(chunk)).length
-        this.environment.logger.info(`${colors.green(`✓`)} ${bytecodeChunkCount} chunks compiled into bytecode.`)
+        const bytecodeChunkCount = Object.keys(output).filter((chunk) =>
+          bytecodeChunkExtensionRE.test(chunk)
+        ).length
+        this.environment.logger.info(
+          `${colors.green(`✓`)} ${bytecodeChunkCount} chunks compiled into bytecode.`
+        )
       }
     }
   }
@@ -349,7 +373,7 @@ function resolveBuildOutputs(
 ): Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined {
   if (libOptions && !Array.isArray(outputs)) {
     const libFormats = libOptions.formats || []
-    return libFormats.map(format => ({ ...outputs, format }))
+    return libFormats.map((format) => ({ ...outputs, format }))
   }
   return outputs
 }
@@ -358,21 +382,32 @@ interface ProtectStringsPluginState extends babel.PluginPass {
   opts: { protectedStrings: Set<string> }
 }
 
-function protectStringsPlugin(api: typeof babel & babel.ConfigAPI): babel.PluginObj<ProtectStringsPluginState> {
+function protectStringsPlugin(
+  api: typeof babel & babel.ConfigAPI
+): babel.PluginObj<ProtectStringsPluginState> {
   const { types: t } = api
 
   function createFromCharCodeFunction(value: string): babel.types.CallExpression {
-    const charCodes = Array.from(value).map(s => s.charCodeAt(0))
-    const charCodeLiterals = charCodes.map(code => t.numericLiteral(code))
+    const charCodes = Array.from(value).map((s) => s.charCodeAt(0))
+    const charCodeLiterals = charCodes.map((code) => t.numericLiteral(code))
 
     // String.fromCharCode
-    const memberExpression = t.memberExpression(t.identifier('String'), t.identifier('fromCharCode'))
+    const memberExpression = t.memberExpression(
+      t.identifier('String'),
+      t.identifier('fromCharCode')
+    )
     // String.fromCharCode(...arr)
-    const callExpression = t.callExpression(memberExpression, [t.spreadElement(t.identifier('arr'))])
+    const callExpression = t.callExpression(memberExpression, [
+      t.spreadElement(t.identifier('arr'))
+    ])
     // return String.fromCharCode(...arr)
     const returnStatement = t.returnStatement(callExpression)
     // function (arr) { return ... }
-    const functionExpression = t.functionExpression(null, [t.identifier('arr')], t.blockStatement([returnStatement]))
+    const functionExpression = t.functionExpression(
+      null,
+      [t.identifier('arr')],
+      t.blockStatement([returnStatement])
+    )
 
     // (function(...) { ... })([x, x, x])
     return t.callExpression(functionExpression, [t.arrayExpression(charCodeLiterals)])

@@ -1,84 +1,75 @@
-<p align="center">
-  <img src="https://alex8088.github.io/assets/electron-vite.svg" width="150px" height="150px">
+<p>
+  <h1 align="center">Veldora</h1>
 </p>
 
-<div align="center">
-  <h1>electron-vite</h1>
-</div>
-<p align="center">Next generation Electron build tooling based on Vite</p>
+<p align="center">Next generation Electron build tooling based on Vite+</p>
 
 <p align="center">
-<img src="https://img.shields.io/npm/v/electron-vite?color=6988e6&label=version">
-<img src="https://img.shields.io/github/license/alex8088/electron-vite?color=blue" alt="license" />
+  <a href="https://www.npmjs.com/package/veldorajs"><img src="https://img.shields.io/npm/v/veldorajs?color=6988e6&label=version" alt="npm version"></a>
+  <a href="https://github.com/YanChenBai/veldora/blob/main/LICENSE"><img src="https://img.shields.io/github/license/YanChenBai/veldora?color=blue" alt="license"></a>
 </p>
 
 <p align="center">
-<a href="https://electron-vite.org">Documentation</a> |
-<a href="https://electron-vite.org/guide">Getting Started</a> |
-<a href="https://github.com/alex8088/quick-start/tree/master/packages/create-electron">create-electron</a>
-</p>
-
-<p align="center">
-<a href="https://cn.electron-vite.org">中文文档</a>
+  <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a>
 </p>
 
 <br />
-<br />
 
-## About This Fork
+## Why a Fork
 
-This repository is a fork of [alex8088/electron-vite](https://github.com/alex8088/electron-vite) focused on Vite+ integration while staying close to upstream.
+Veldora is a fork of [electron-vite](https://github.com/alex8088/electron-vite) rebuilt on [Vite+](https://viteplus.dev). electron-vite targets Vite with esbuild and Rollup; Vite+ unifies the stack on Rolldown and Oxc for faster builds and one `vite.config.ts` for the entire workflow. Veldora brings that to Electron while keeping the electron-vite API familiar.
 
-Additions in this fork:
+## What's Changed
 
-- Load Electron targets from a unified Vite+ `vite.config.ts`.
-- Share Vite+ resolve options, including `tsconfigPaths`, across main, preload and renderer.
-- Provide Vite's interactive development shortcuts with coordinated Electron restart and shutdown.
-- Forward browser errors and warning/error console output to the development terminal by default.
+- ⚡️ Rebuilt on Vite+ (Rolldown + Oxc) instead of esbuild + Rollup
+- 📄 Electron targets load from a unified `vite.config.ts` as well as `veldora.config.*`
+- 🧭 Shared `resolve` options — including `tsconfigPaths` — applied across main, preload and renderer
+- 🗂 Targets grouped under an `electron` config namespace
+- 🦀 `swcPlugin` replaced with `oxcPlugin` (Vite's built-in Oxc transformer)
+- ⌨️ Vite interactive dev shortcuts with coordinated Electron restart and shutdown
+- 🖥 Browser errors and `console.warn` / `console.error` forwarded to the terminal by default
 
 ## Features
 
-- ⚡️ [Vite](https://vitejs.dev) powered and use the same way.
-- 🛠 Pre-configure with sensible defaults optimized for Electron.
-- 💡 Optimize asset handling for Electron main process.
-- 🚀 Fast HMR & hot reloading.
-- 🔥 Isolated build for multi-entry application development.
-- ✨ Simplify multi-threading development.
-- 🔒 Compile code to v8 bytecode to protect source code.
-- 🔌 Easy to debug in IDEs such as VSCode or WebStorm.
-- 📦 Out-of-the-box support for TypeScript, Vue, React, Svelte, SolidJS and more.
+- ⚡️ Powered by [Vite+](https://viteplus.dev) and used the same way as Vite
+- 🛠 Sensible defaults pre-configured for Electron main, preload and renderer
+- 💡 Optimized asset handling for the Electron main process
+- 🚀 Fast HMR and hot reloading
+- 🔥 Isolated builds for multi-entry applications
+- ✨ Simplified multi-threading development
+- 🔒 Compile code to V8 bytecode to protect source code
+- 🔌 Easy to debug in VSCode and WebStorm
+- 📦 TypeScript, Vue, React, Svelte, SolidJS and more out of the box
+
+## Installation
+
+```sh
+npm i -D veldorajs
+```
 
 ## Usage
 
-### Install
-
-```sh
-npm i electron-vite -D
-```
-
-### Development & Build
-
-In a project where `electron-vite` is installed, you can use `electron-vite` binary directly with `npx electron-vite` or add the npm scripts to your `package.json` file like this:
+Add the commands to your `package.json` and run them with `npx vld`:
 
 ```json
 {
   "scripts": {
-    "start": "electron-vite preview",
-    "dev": "electron-vite dev",
-    "prebuild": "electron-vite build"
+    "dev": "vld dev",
+    "build": "vld build",
+    "preview": "vld preview"
   }
 }
 ```
 
-### Configuration
+`veldora` is the full command name; `vld` is the short alias.
 
-When running `electron-vite` from the command line, electron-vite will automatically try to resolve `electron.vite.config.*` or `vite.config.*` inside the project root. When both exist, `electron.vite.config.*` takes precedence.
+## Configuration
 
-Vite+ projects can keep the Electron targets and shared resolve options in a single `vite.config.ts`. The shared `resolve` options are applied to main, preload and renderer; options declared by an individual target take precedence.
+`veldora` resolves `veldora.config.*` or `vite.config.*` from the project root, with `veldora.config.*` taking precedence when both exist.
 
 ```ts
-// vite.config.ts
-import { defineConfig } from 'electron-vite'
+// veldora.config.ts
+import { defineConfig } from 'veldorajs'
 
 export default defineConfig({
   resolve: {
@@ -87,48 +78,83 @@ export default defineConfig({
       '@': './src'
     }
   },
-  main: {},
-  preload: {},
-  renderer: {}
+  electron: {
+    main: {},
+    preload: {},
+    renderer: {}
+  }
 })
 ```
 
-During development, the renderer server enables Vite's interactive CLI shortcuts. Press `h + enter` to list them. Restarting with `r` restarts both the Vite server and the Electron app, while `q` closes both processes.
+Shared `resolve` options apply to all three targets; per-target options take precedence.
 
-Browser runtime errors and `console.warn` / `console.error` calls are forwarded to the terminal by default through Vite's `server.forwardConsole`. You can disable or customize it in the renderer config:
+### Dev shortcuts
+
+The renderer server exposes Vite's interactive CLI shortcuts. Press `h + enter` to list them. `r` restarts the Vite server and the Electron app; `q` closes both.
+
+### Forwarding console
+
+Browser errors and `console.warn` / `console.error` are forwarded to the terminal through Vite's `server.forwardConsole`. Disable or customize it in the renderer config:
 
 ```ts
 export default defineConfig({
-  main: {},
-  preload: {},
-  renderer: {
-    server: {
-      forwardConsole: {
-        unhandledErrors: true,
-        logLevels: ['warn', 'error']
+  electron: {
+    renderer: {
+      server: {
+        forwardConsole: {
+          unhandledErrors: true,
+          logLevels: ['warn', 'error']
+        }
       }
     }
   }
 })
 ```
 
-### Getting Started
+## Migration from electron-vite
 
-Clone the [electron-vite-boilerplate](https://github.com/alex8088/electron-vite-boilerplate) or use the [create-electron](https://github.com/alex8088/quick-start/tree/master/packages/create-electron) tool to scaffold your project.
+Veldora keeps the electron-vite API but requires Vite 8 (Vite+).
 
-```bash
-npm create @quick-start/electron@latest
+1. **Swap the dependency**
+
+   ```sh
+   npm rm electron-vite
+   npm i -D veldorajs
+   ```
+
+2. **Rename the command** in your scripts: `electron-vite` → `veldora` (or `vld`).
+
+3. **Rename the config file**: `electron.vite.config.*` → `veldora.config.*` (or move into `vite.config.ts`).
+
+4. **Group targets under `electron`** and switch the SWC plugin to Oxc:
+
+   ```diff
+   -import { defineConfig, swcPlugin } from 'electron-vite'
+   +import { defineConfig, oxcPlugin } from 'veldorajs'
+
+    export default defineConfig({
+   -  main: { plugins: [swcPlugin()] },
+   -  preload: {},
+   -  renderer: {}
+   +  electron: {
+   +    main: { plugins: [oxcPlugin()] },
+   +    preload: {},
+   +    renderer: {}
+   +  }
+    })
+   ```
+
+5. **Upgrade to Vite 8**. With Vite+, alias `vite` to `@voidzero-dev/vite-plus-core` and pin `vitest` to the version bundled by Vite+.
+
+## Getting Started
+
+```sh
+mkdir my-electron-app && cd my-electron-app
+npm init -y
+npm i -D veldorajs electron
 ```
 
-Currently supported template presets include:
-
-|                                                 JavaScript                                                 |                                                    TypeScript                                                    |
-| :--------------------------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------: |
-| [vanilla](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/vanilla) | [vanilla-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/vanilla-ts) |
-|     [vue](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/vue)     |     [vue-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/vue-ts)     |
-|   [react](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/react)   |   [react-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/react-ts)   |
-|  [svelte](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/svelte)  |  [svelte-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/svelte-ts)  |
-|   [solid](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/solid)   |   [solid-ts](https://github.com/alex8088/quick-start/tree/master/packages/create-electron/playground/solid-ts)   |
+Add the scripts and a `veldora.config.ts` as shown above, then run `veldora dev`.
 
 ## Contribution
 
@@ -136,4 +162,4 @@ See [Contributing Guide](CONTRIBUTING.md).
 
 ## License
 
-[MIT](./LICENSE) © alex.wei
+[MIT](./LICENSE) © byc

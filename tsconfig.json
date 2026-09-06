@@ -16,5 +16,5 @@
     "noImplicitAny": false,
     "noImplicitReturns": true
   },
-  "include": ["src", "rollup.config.ts"]
+  "include": ["src", "vite.config.ts"]
 }

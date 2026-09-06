@@ -57,7 +57,7 @@ interface IsolatedEntriesMixin {
 
 interface ExternalizeDepsMixin {
   /**
-   * Options pass on to `externalizeDeps` plugin in electron-vite.
+   * Options pass on to `externalizeDeps` plugin in veldora.
    *
    * Automatically externalize dependencies.
    *
@@ -68,7 +68,7 @@ interface ExternalizeDepsMixin {
 
 interface BytecodeMixin {
   /**
-   * Options pass on to `bytecode` plugin in electron-vite.
+   * Options pass on to `bytecode` plugin in veldora.
    * https://electron-vite.org/guide/source-code-protection#options
    *
    * Compile source code to v8 bytecode.
@@ -78,7 +78,8 @@ interface BytecodeMixin {
 
 interface MainBuildOptions extends ViteBuildOptions, ExternalizeDepsMixin, BytecodeMixin {}
 
-interface PreloadBuildOptions extends ViteBuildOptions, ExternalizeDepsMixin, BytecodeMixin, IsolatedEntriesMixin {}
+interface PreloadBuildOptions
+  extends ViteBuildOptions, ExternalizeDepsMixin, BytecodeMixin, IsolatedEntriesMixin {}
 
 interface RendererBuildOptions extends ViteBuildOptions, IsolatedEntriesMixin {}
 
@@ -108,14 +109,7 @@ export interface PreloadViteConfig extends BaseViteConfig<PreloadBuildOptions> {
 
 export interface RendererViteConfig extends BaseViteConfig<RendererBuildOptions> {}
 
-export interface UserConfig {
-  /**
-   * Shared resolve options for the electron main, preload and renderer processes.
-   *
-   * This includes Vite+ resolve extensions such as `resolve.tsconfigPaths` when
-   * the project uses Vite+ as its Vite implementation.
-   */
-  resolve?: ResolveOptions
+export interface ElectronConfig {
   /**
    * Vite config options for electron main process
    *
@@ -136,6 +130,20 @@ export interface UserConfig {
   preload?: PreloadViteConfig
 }
 
+export interface UserConfig {
+  /**
+   * Shared resolve options for the electron main, preload and renderer processes.
+   *
+   * This includes Vite+ resolve extensions such as `resolve.tsconfigPaths` when
+   * the project uses Vite+ as its Vite implementation.
+   */
+  resolve?: ResolveOptions
+  /**
+   * Vite config options for the electron main, preload and renderer processes.
+   */
+  electron?: ElectronConfig
+}
+
 export type ElectronViteConfigFnObject = (env: ConfigEnv) => UserConfig
 export type ElectronViteConfigFnPromise = (env: ConfigEnv) => Promise<UserConfig>
 export type ElectronViteConfigFn = (env: ConfigEnv) => UserConfig | Promise<UserConfig>
@@ -148,7 +156,7 @@ export type ElectronViteConfigExport =
   | ElectronViteConfigFn
 
 /**
- * Type helper to make it easier to use `vite.config.*` or `electron.vite.config.*`
+ * Type helper to make it easier to use `vite.config.*` or `veldora.config.*`
  * accepts a direct {@link UserConfig} object, or a function that returns it.
  * The function receives a object that exposes two properties:
  * `command` (either `'build'` or `'serve'`), and `mode`.
@@ -212,28 +220,45 @@ export async function resolveConfig(
 
       const outDir = config.build?.outDir
 
-      const { resolve, main, preload, renderer } = loadResult.config
+      const { resolve, electron } = loadResult.config
+      const { main, preload, renderer } = electron || {}
+
+      const electronConfig: ElectronConfig = {}
 
       if (main) {
-        userConfig.main = await new MainConfigFactory(mergeSharedResolve(resolve, main), config, {
-          outDir,
-          root
-        }).build()
+        electronConfig.main = await new MainConfigFactory(
+          mergeSharedResolve(resolve, main),
+          config,
+          {
+            outDir,
+            root
+          }
+        ).build()
       }
 
       if (preload) {
-        userConfig.preload = await new PreloadConfigFactory(mergeSharedResolve(resolve, preload), config, {
-          outDir,
-          root
-        }).build()
+        electronConfig.preload = await new PreloadConfigFactory(
+          mergeSharedResolve(resolve, preload),
+          config,
+          {
+            outDir,
+            root
+          }
+        ).build()
       }
 
       if (renderer) {
-        userConfig.renderer = await new RendererConfigFactory(mergeSharedResolve(resolve, renderer), config, {
-          outDir,
-          root
-        }).build()
+        electronConfig.renderer = await new RendererConfigFactory(
+          mergeSharedResolve(resolve, renderer),
+          config,
+          {
+            outDir,
+            root
+          }
+        ).build()
       }
+
+      userConfig.electron = electronConfig
 
       configFile = loadResult.path
       configFileDependencies = loadResult.dependencies
@@ -256,7 +281,9 @@ function mergeSharedResolve<T extends MainViteConfig | PreloadViteConfig | Rende
   return resolve ? (mergeConfig({ resolve }, targetConfig as ViteConfig) as T) : targetConfig
 }
 
-export abstract class ConfigFactory<T extends MainViteConfig | PreloadViteConfig | RendererViteConfig> {
+export abstract class ConfigFactory<
+  T extends MainViteConfig | PreloadViteConfig | RendererViteConfig
+> {
   constructor(
     protected readonly baseConfig: T,
     protected readonly inlineConfig: InlineConfig,
@@ -293,7 +320,10 @@ export class MainConfigFactory extends ConfigFactory<MainViteConfig> {
     return 'main'
   }
 
-  protected async resolveBuiltinPlugins(config: MainViteConfig, cleanMode?: boolean): Promise<PluginOption[]> {
+  protected async resolveBuiltinPlugins(
+    config: MainViteConfig,
+    cleanMode?: boolean
+  ): Promise<PluginOption[]> {
     const configDrivenPlugins: PluginOption[] = await resolveConfigDrivenPlugins(config)
 
     return cleanMode
@@ -322,7 +352,10 @@ export class PreloadConfigFactory extends ConfigFactory<PreloadViteConfig> {
     return 'preload'
   }
 
-  protected async resolveBuiltinPlugins(config: PreloadViteConfig, cleanMode?: boolean): Promise<PluginOption[]> {
+  protected async resolveBuiltinPlugins(
+    config: PreloadViteConfig,
+    cleanMode?: boolean
+  ): Promise<PluginOption[]> {
     const configDrivenPlugins: PluginOption[] = await resolveConfigDrivenPlugins(config)
 
     return cleanMode
@@ -350,7 +383,10 @@ export class RendererConfigFactory extends ConfigFactory<RendererViteConfig> {
     return 'renderer'
   }
 
-  protected async resolveBuiltinPlugins(config: RendererViteConfig, cleanMode?: boolean): Promise<PluginOption[]> {
+  protected async resolveBuiltinPlugins(
+    config: RendererViteConfig,
+    cleanMode?: boolean
+  ): Promise<PluginOption[]> {
     return cleanMode
       ? [electronRendererConfigPresetPlugin({ root: this.options.root })]
       : [
@@ -373,28 +409,34 @@ function resetOutDir(config: ViteConfig, outDir: string, subOutDir: string): voi
   }
 }
 
-async function resolveConfigDrivenPlugins(config: MainViteConfig | PreloadViteConfig): Promise<PluginOption[]> {
+async function resolveConfigDrivenPlugins(
+  config: MainViteConfig | PreloadViteConfig
+): Promise<PluginOption[]> {
   const userPlugins = (await asyncFlatten(config.plugins || [])).filter(Boolean) as Plugin[]
 
   const configDrivenPlugins: PluginOption[] = []
 
-  const hasExternalizeDepsPlugin = userPlugins.some(p => p.name === 'vite:externalize-deps')
+  const hasExternalizeDepsPlugin = userPlugins.some((p) => p.name === 'vite:externalize-deps')
   if (!hasExternalizeDepsPlugin) {
     const externalOptions = config.build?.externalizeDeps ?? true
     if (externalOptions) {
-      isOptions<ExternalOptions>(externalOptions)
-        ? configDrivenPlugins.push(externalizeDepsPlugin(externalOptions))
-        : configDrivenPlugins.push(externalizeDepsPlugin())
+      if (isOptions<ExternalOptions>(externalOptions)) {
+        configDrivenPlugins.push(externalizeDepsPlugin(externalOptions))
+      } else {
+        configDrivenPlugins.push(externalizeDepsPlugin())
+      }
     }
   }
 
-  const hasBytecodePlugin = userPlugins.some(p => p.name === 'vite:bytecode')
+  const hasBytecodePlugin = userPlugins.some((p) => p.name === 'vite:bytecode')
   if (!hasBytecodePlugin) {
     const bytecodeOptions = config.build?.bytecode
     if (bytecodeOptions) {
-      isOptions<BytecodeOptions>(bytecodeOptions)
-        ? configDrivenPlugins.push(bytecodePlugin(bytecodeOptions))
-        : configDrivenPlugins.push(bytecodePlugin())
+      if (isOptions<BytecodeOptions>(bytecodeOptions)) {
+        configDrivenPlugins.push(bytecodePlugin(bytecodeOptions))
+      } else {
+        configDrivenPlugins.push(bytecodePlugin())
+      }
     }
   }
 
@@ -405,7 +447,7 @@ function isOptions<T extends object>(value: boolean | T): value is T {
   return typeof value === 'object' && value !== null
 }
 
-const CONFIG_FILE_NAME = 'electron.vite.config'
+const CONFIG_FILE_NAME = 'veldora.config'
 const VITE_CONFIG_FILE_NAME = 'vite.config'
 
 export async function loadConfigFromFile(
@@ -421,12 +463,16 @@ export async function loadConfigFromFile(
 }> {
   const resolvedPath = configFile
     ? path.resolve(configFile)
-    : findConfigFile(configRoot, [CONFIG_FILE_NAME, VITE_CONFIG_FILE_NAME], ['js', 'ts', 'mjs', 'cjs', 'mts', 'cts'])
+    : findConfigFile(
+        configRoot,
+        [CONFIG_FILE_NAME, VITE_CONFIG_FILE_NAME],
+        ['js', 'ts', 'mjs', 'cjs', 'mts', 'cts']
+      )
 
   if (!resolvedPath) {
     return {
       path: '',
-      config: { main: {}, preload: {}, renderer: {} },
+      config: { electron: { main: {}, preload: {}, renderer: {} } },
       dependencies: []
     }
   }
@@ -437,13 +483,17 @@ export async function loadConfigFromFile(
     const { code, dependencies } = await bundleConfigFile(resolvedPath, isESM)
     const configExport = await loadConfigFormBundledFile(configRoot, resolvedPath, code, isESM)
 
-    const config = await (typeof configExport === 'function' ? configExport(configEnv) : configExport)
+    const config = await (typeof configExport === 'function'
+      ? configExport(configEnv)
+      : configExport)
     if (!isObject(config)) {
       throw new Error(`config must export or return an object`)
     }
 
     if (!ignoreConfigWarning) {
-      const missingFields = ['main', 'renderer', 'preload'].filter(field => !config[field])
+      const missingFields = ['main', 'renderer', 'preload'].filter(
+        (field) => !config.electron?.[field]
+      )
       if (missingFields.length > 0) {
         createLogger(logLevel).warn(
           `${colors.yellow(colors.bold('(!)'))} ${colors.yellow(`${missingFields.join(' and ')} config is missing`)}\n`
@@ -457,7 +507,9 @@ export async function loadConfigFromFile(
       dependencies
     }
   } catch (e) {
-    createLogger(logLevel).error(colors.red(`failed to load config from ${resolvedPath}`), { error: e as Error })
+    createLogger(logLevel).error(colors.red(`failed to load config from ${resolvedPath}`), {
+      error: e as Error
+    })
     throw e
   }
 }
@@ -474,10 +526,13 @@ function findConfigFile(configRoot: string, names: string[], extensions: string[
   return ''
 }
 
-async function bundleConfigFile(fileName: string, isESM: boolean): Promise<{ code: string; dependencies: string[] }> {
-  const dirnameVarName = '__electron_vite_injected_dirname'
-  const filenameVarName = '__electron_vite_injected_filename'
-  const importMetaUrlVarName = '__electron_vite_injected_import_meta_url'
+async function bundleConfigFile(
+  fileName: string,
+  isESM: boolean
+): Promise<{ code: string; dependencies: string[] }> {
+  const dirnameVarName = '__veldora_injected_dirname'
+  const filenameVarName = '__veldora_injected_filename'
+  const importMetaUrlVarName = '__veldora_injected_import_meta_url'
   const result = await build({
     absWorkingDir: process.cwd(),
     entryPoints: [fileName],
@@ -497,7 +552,7 @@ async function bundleConfigFile(fileName: string, isESM: boolean): Promise<{ cod
       {
         name: 'externalize-deps',
         setup(build): void {
-          build.onResolve({ filter: /.*/ }, args => {
+          build.onResolve({ filter: /.*/ }, (args) => {
             const id = args.path
             if (id[0] !== '.' && !path.isAbsolute(id)) {
               return {
@@ -511,7 +566,7 @@ async function bundleConfigFile(fileName: string, isESM: boolean): Promise<{ cod
       {
         name: 'replace-import-meta',
         setup(build): void {
-          build.onLoad({ filter: /\.[cm]?[jt]s$/ }, async args => {
+          build.onLoad({ filter: /\.[cm]?[jt]s$/ }, async (args) => {
             const contents = await fs.promises.readFile(args.path, 'utf8')
             const injectValues =
               `const ${dirnameVarName} = ${JSON.stringify(path.dirname(args.path))};` +

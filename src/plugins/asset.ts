@@ -1,6 +1,6 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import type { SourceMapInput } from 'rollup'
+import type { SourceMap } from 'magic-string'
 import { type Plugin, type Environment, normalizePath } from 'vite'
 import MagicString from 'magic-string'
 import { cleanUrl, getHash, toRelativePath } from '../utils'
@@ -13,7 +13,7 @@ const assetImportRE = /(?:[?|&]asset(?:&|$)|\.wasm\?loader$|\.node$)/
 const assetRE = /[?|&]asset(?:&|$)/
 const assetUnpackRE = /[?|&]asset&asarUnpack$/
 
-const wasmHelperId = '\0__electron-vite-wasm-helper'
+const wasmHelperId = '\0__veldora-wasm-helper'
 
 const wasmHelperCode = `
 import { join } from 'path'
@@ -106,7 +106,7 @@ export default function assetPlugin(): Plugin {
         export default importObject => loadWasm(${referenceId}, importObject)`
       }
     },
-    renderChunk(code, chunk, { sourcemap, dir }): { code: string; map: SourceMapInput } | null {
+    renderChunk(code, chunk, { sourcemap, dir }): { code: string; map: SourceMap | null } | null {
       let match: RegExpExecArray | null
       let s: MagicString | undefined
 
@@ -129,7 +129,10 @@ export default function assetPlugin(): Plugin {
         s ||= new MagicString(code)
         const [full, hash] = match
         const filename = publicAssetPathMap.get(hash)!
-        const outputFilepath = toRelativePath(filename, normalizePath(path.join(dir!, chunk.fileName)))
+        const outputFilepath = toRelativePath(
+          filename,
+          normalizePath(path.join(dir!, chunk.fileName))
+        )
         const replacement = JSON.stringify(outputFilepath)
         s.overwrite(match.index, match.index + full.length, replacement, {
           contentOnly: true

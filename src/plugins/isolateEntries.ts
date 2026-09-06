@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-function-type */
 import path from 'node:path'
-import { type InlineConfig, type Plugin, type LogLevel, type Rolldown, build as viteBuild, mergeConfig } from 'vite'
+import {
+  type InlineConfig,
+  type Plugin,
+  type LogLevel,
+  type Rolldown,
+  build as viteBuild,
+  mergeConfig
+} from 'vite'
 import colors from 'picocolors'
 import { cleanUrl } from '../utils'
 import type { ConfigFactory, PreloadViteConfig, RendererViteConfig } from '../config'
@@ -14,7 +21,9 @@ const LogLevels: Record<LogLevel, number> = {
   info: 3
 }
 
-export default function isolateEntriesPlugin(factory: ConfigFactory<PreloadViteConfig | RendererViteConfig>): Plugin {
+export default function isolateEntriesPlugin(
+  factory: ConfigFactory<PreloadViteConfig | RendererViteConfig>
+): Plugin {
   let entries: string[] | { [x: string]: string }[]
 
   let transformedCount = 0
@@ -30,7 +39,9 @@ export default function isolateEntriesPlugin(factory: ConfigFactory<PreloadViteC
       if (input && typeof input === 'object') {
         if ((Array.isArray(input) && input.length > 0) || Object.keys(input).length > 1) {
           opts.input = VIRTUAL_ENTRY_ID
-          entries = Array.isArray(input) ? input : Object.entries(input).map(([key, value]) => ({ [key]: value }))
+          entries = Array.isArray(input)
+            ? input
+            : Object.entries(input).map(([key, value]) => ({ [key]: value }))
           return opts
         }
       }
@@ -150,7 +161,9 @@ function transformReporterPlugin(
 ): Plugin<{ getTransformedCount: () => number }> {
   let transformedCount = 0
   const log = throttle((id, root) => {
-    writeLine(`transforming (${preTransformedCount + transformedCount}) ${colors.dim(path.relative(root, id))}`)
+    writeLine(
+      `transforming (${preTransformedCount + transformedCount}) ${colors.dim(path.relative(root, id))}`
+    )
   })
   return {
     name: 'vite:transform-reporter',

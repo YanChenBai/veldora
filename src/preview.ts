@@ -4,7 +4,10 @@ import type { InlineConfig } from './config'
 import { startElectron } from './electron'
 import { build } from './build'
 
-export async function preview(inlineConfig: InlineConfig = {}, options: { skipBuild?: boolean }): Promise<void> {
+export async function preview(
+  inlineConfig: InlineConfig = {},
+  options: { skipBuild?: boolean }
+): Promise<void> {
   if (!options.skipBuild) {
     await build(inlineConfig)
   }

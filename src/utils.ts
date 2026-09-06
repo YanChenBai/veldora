@@ -12,7 +12,9 @@ export function isObject(value: unknown): value is Record<string, unknown> {
 export const wildcardHosts = new Set(['0.0.0.0', '::', '0000:0000:0000:0000:0000:0000:0000:0000'])
 
 export function resolveHostname(optionsHost: string | boolean | undefined): string {
-  return typeof optionsHost === 'string' && !wildcardHosts.has(optionsHost) ? optionsHost : 'localhost'
+  return typeof optionsHost === 'string' && !wildcardHosts.has(optionsHost)
+    ? optionsHost
+    : 'localhost'
 }
 
 export const queryRE = /\?.*$/s
@@ -91,7 +93,7 @@ type DeepWritable<T> =
 
 export function deepClone<T>(value: T): DeepWritable<T> {
   if (Array.isArray(value)) {
-    return value.map(v => deepClone(v)) as DeepWritable<T>
+    return value.map((v) => deepClone(v)) as DeepWritable<T>
   }
   if (isObject(value)) {
     const cloned: Record<string, any> = {}

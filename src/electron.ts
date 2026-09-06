@@ -11,7 +11,9 @@ const ensureElectronEntryFile = (root = process.cwd()): void => {
   const pkg = loadPackageData()
   if (pkg) {
     if (!pkg.main) {
-      throw new Error('No entry point found for electron app, please add a "main" field to package.json')
+      throw new Error(
+        'No entry point found for electron app, please add a "main" field to package.json'
+      )
     } else {
       const entryPath = path.resolve(root, pkg.main)
       if (!fs.existsSync(entryPath)) {
@@ -138,7 +140,9 @@ export function startElectron(root: string | undefined): ChildProcess {
 
   const isDev = process.env.NODE_ENV_ELECTRON_VITE === 'development'
 
-  const args: string[] = process.env.ELECTRON_CLI_ARGS ? JSON.parse(process.env.ELECTRON_CLI_ARGS) : []
+  const args: string[] = process.env.ELECTRON_CLI_ARGS
+    ? JSON.parse(process.env.ELECTRON_CLI_ARGS)
+    : []
 
   if (!!process.env.REMOTE_DEBUGGING_PORT && isDev) {
     args.push(`--remote-debugging-port=${process.env.REMOTE_DEBUGGING_PORT}`)
