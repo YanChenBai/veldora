@@ -113,6 +113,13 @@ export async function createServer(
 
     logger.info(colors.green(`\nstarting electron app...\n`))
 
+    // On Windows `process.stdin.isTTY` may be `undefined` even in an interactive
+    // terminal, which silently disables Vite's CLI shortcuts. Fall back to
+    // `process.stdout.isTTY`, which is reported more reliably.
+    if (!process.stdin.isTTY && process.stdout.isTTY && !process.env.CI) {
+      Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true })
+    }
+
     server?.bindCLIShortcuts({
       print: true,
       customShortcuts: [
@@ -124,6 +131,21 @@ export async function createServer(
             setRendererUrl(server)
             restartElectron()
             server.printUrls()
+          }
+        },
+        {
+          key: 'u',
+          description: 'show server url',
+          action(server): void {
+            server.config.logger.info('')
+            server.printUrls()
+          }
+        },
+        {
+          key: 'c',
+          description: 'clear console',
+          action(server): void {
+            server.config.logger.clearScreen('error')
           }
         },
         {

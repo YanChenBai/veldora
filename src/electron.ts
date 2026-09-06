@@ -162,7 +162,12 @@ export function startElectron(root: string | undefined): ChildProcess {
 
   const entry = process.env.ELECTRON_ENTRY || '.'
 
-  const ps = spawn(electronPath, [entry].concat(args), { stdio: 'inherit' })
+  // Don't inherit stdin so the CLI shortcuts keep reading from the terminal.
+  // On Windows, a GUI child (electron) inheriting the console input would
+  // otherwise steal keystrokes from the parent's readline.
+  const ps = spawn(electronPath, [entry].concat(args), {
+    stdio: ['ignore', 'inherit', 'inherit']
+  })
   ps.on('close', process.exit)
 
   return ps
