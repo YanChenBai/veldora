@@ -1,55 +1,89 @@
-<p>
-  <h1 align="center">Veldora</h1>
+<p align="center">
+  <img src="./assets/brand/veldora-hero.png" alt="Veldora" width="420" />
 </p>
 
-<p align="center">基于 Vite+ 的下一代 Electron 构建工具</p>
+<h1 align="center">Veldora</h1>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/veldorajs"><img src="https://img.shields.io/npm/v/veldorajs?color=6988e6&label=version" alt="npm version"></a>
-  <a href="https://github.com/YanChenBai/veldora/blob/main/LICENSE"><img src="https://img.shields.io/github/license/YanChenBai/veldora?color=blue" alt="license"></a>
+  <strong>Build Delightful Desktop Apps</strong><br />
+  基于 Vite+ 的新一代 Electron 开发与构建工具。
 </p>
 
 <p align="center">
-  <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a>
+  <a href="https://www.npmjs.com/package/veldorajs">
+    <img src="https://img.shields.io/npm/v/veldorajs?color=5b8def&label=npm" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/veldorajs">
+    <img src="https://img.shields.io/npm/dm/veldorajs?color=5b8def" alt="npm downloads" />
+  </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/YanChenBai/veldora?color=5b8def" alt="license" />
+  </a>
+  <img src="https://img.shields.io/badge/Node-%5E20.19%20%7C%7C%20%3E%3D22.12-5b8def" alt="Node.js version" />
 </p>
 
-<br />
+<p align="center">
+  <a href="./README.md">English</a> ·
+  <a href="./README.zh-CN.md">简体中文</a>
+</p>
 
-## 为什么 Fork
+---
 
-Veldora 是基于 [electron-vite](https://github.com/alex8088/electron-vite) 重构、运行在 [Vite+](https://viteplus.dev) 之上的 fork。electron-vite 面向的是基于 esbuild 与 Rollup 的 Vite；而 Vite+ 将整个工具链统一到 Rolldown 和 Oxc 上，带来更快的构建，以及一个贯穿整个工作流的 `vite.config.ts`。Veldora 把这些能力带到了 Electron，同时保持 electron-vite 的 API 不变，让你易于上手。
+## Veldora 是什么？
 
-## 改动
+Veldora 是一个围绕 [Vite+](https://viteplus.dev) 重构的现代 Electron 构建工具。
 
-- ⚡️ 基于 Vite+（Rolldown + Oxc）重建，取代 esbuild + Rollup
-- 📄 Electron 目标从统一的 `vite.config.ts` 加载，同时也支持 `veldora.config.*`
-- 🧭 共享的 `resolve` 选项——包括 `tsconfigPaths`——应用到 main、preload 和 renderer
-- 🗂 目标分组到 `electron` 配置命名空间下
-- 🦀 `swcPlugin` 替换为 `oxcPlugin`（Vite 内置的 Oxc 转换器）
-- ⌨️ Vite 交互式开发快捷键，配合协调的 Electron 重启与关闭
-- 🖥 浏览器错误和 `console.warn` / `console.error` 默认转发到终端
+它保留了 `electron-vite` 熟悉的开发模式，同时把底层工具链迁移到由 Rolldown 和 Oxc 驱动的新一代 Vite+ 生态。
 
-## 特性
+Electron 的 `main`、`preload`、`renderer` 三个目标统一放在 `electron` 配置命名空间下，并且可以从下面两种配置文件中读取：
 
-- ⚡️ 基于 [Vite+](https://viteplus.dev)，使用方式与 Vite 一致
-- 🛠 为 Electron 的 main、preload 和 renderer 预配置合理的默认值
-- 💡 针对 Electron 主进程优化的资源处理
-- 🚀 快速 HMR 与热重载
-- 🔥 多入口应用的隔离构建
-- ✨ 简化的多线程开发
-- 🔒 将代码编译为 V8 字节码以保护源码
-- 🔌 在 VSCode 和 WebStorm 中轻松调试
-- 📦 开箱即用地支持 TypeScript、Vue、React、Svelte、SolidJS 等
+- `veldora.config.*`
+- `vite.config.*`
 
-## 安装
+如果两者同时存在，`veldora.config.*` 优先。
+
+## 核心特性
+
+|                           |                                                                   |
+| ------------------------- | ----------------------------------------------------------------- |
+| ⚡ **原生面向 Vite+**     | 基于 Rolldown + Oxc 的构建流程。                                  |
+| 🧩 **统一 Electron 配置** | `main`、`preload`、`renderer` 放在同一个 `electron` 命名空间。    |
+| 🧭 **共享解析配置**       | alias 与 `resolve.tsconfigPaths` 可以跨 Electron 目标复用。       |
+| 🔒 **V8 Bytecode**        | main / preload 输出可编译为 V8 字节码。                           |
+| 🧵 **Node 侧辅助能力**    | 内置 assets、workers、module path、WASM、native module 类型支持。 |
+| 🖥 **更好的开发体验**      | Electron 协同重启、Renderer 错误转发到终端、Vite 交互快捷键。     |
+
+## 快速开始
+
+### 1. 环境要求
+
+Veldora 当前要求：
+
+- Node.js `^20.19.0 || >=22.12.0`
+- Vite `^8.0.0`
+- Electron
+
+推荐直接使用 Vite+ 工作区。
+
+如果项目还没有迁移到 Vite+：
 
 ```sh
-npm i -D veldorajs
+vp migrate
 ```
 
-## 使用
+### 2. 安装
 
-将命令添加到你的 `package.json`，然后通过 `npx vld` 运行：
+```sh
+npm i -D veldorajs electron
+```
+
+或者：
+
+```sh
+pnpm add -D veldorajs electron
+```
+
+### 3. 添加 scripts
 
 ```json
 {
@@ -61,14 +95,110 @@ npm i -D veldorajs
 }
 ```
 
-`veldora` 是完整命令名；`vld` 是短别名。
+`veldora` 是完整 CLI 名称，`vld` 是短命令。
 
-## 配置
+### 4. 配置 `veldorajs/node`
 
-`veldora` 会从项目根目录解析 `veldora.config.*` 或 `vite.config.*`，当两者同时存在时，`veldora.config.*` 优先。
+如果项目使用 TypeScript，请在 Electron main / preload 使用的 tsconfig 中添加 `veldorajs/node`：
+
+```jsonc
+// tsconfig.node.json
+{
+  "compilerOptions": {
+    "types": ["node", "veldorajs/node"]
+  },
+  "include": ["vite.config.*", "veldora.config.*", "src/main/**/*", "src/preload/**/*"]
+}
+```
+
+也可以通过声明文件引入：
 
 ```ts
-// veldora.config.ts
+/// <reference types="veldorajs/node" />
+```
+
+`veldorajs/node` 是一个 **仅类型入口**，不要在运行时代码中写：
+
+```ts
+import 'veldorajs/node'
+```
+
+它提供的 ambient types 包括：
+
+- Vite `UserConfig` 上的 `electron`
+- `process.env.ELECTRON_RENDERER_URL`
+- `?nodeWorker`
+- `?modulePath`
+- `?asset`
+- `?asset&asarUnpack`
+- `.node` 原生模块
+- `.wasm?loader`
+
+> 如果已经配置了 `compilerOptions.types`，需要注意它是一个 allow-list，其他需要的类型也必须保留。
+
+### 5. 配置 Electron
+
+#### 方式 A — `veldora.config.ts`
+
+```ts
+import { defineConfig } from 'veldorajs'
+
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  },
+
+  electron: {
+    main: {},
+    preload: {},
+    renderer: {}
+  }
+})
+```
+
+#### 方式 B — 统一写在 `vite.config.ts`
+
+```ts
+import { defineConfig } from 'vite-plus'
+
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  },
+
+  electron: {
+    main: {},
+    preload: {},
+    renderer: {}
+  }
+})
+```
+
+共享的 `resolve` 会应用到所有 Electron target；target 内部配置优先级更高。
+
+### 6. 启动开发
+
+```sh
+npm run dev
+```
+
+构建：
+
+```sh
+npm run build
+```
+
+预览：
+
+```sh
+npm run preview
+```
+
+## 配置指南
+
+### 共享 alias 与 tsconfig paths
+
+```ts
 import { defineConfig } from 'veldorajs'
 
 export default defineConfig({
@@ -78,6 +208,7 @@ export default defineConfig({
       '@': './src'
     }
   },
+
   electron: {
     main: {},
     preload: {},
@@ -86,17 +217,77 @@ export default defineConfig({
 })
 ```
 
-共享的 `resolve` 选项会应用到 main、preload 和 renderer 三个目标；单个目标声明的选项优先级更高。
-
-### 开发快捷键
-
-renderer 开发服务器启用了 Vite 的交互式 CLI 快捷键。按 `h + enter` 列出所有快捷键。按 `r` 重启 Vite 服务器和 Electron 应用；按 `q` 关闭两者。
-
-### 转发控制台输出
-
-浏览器错误和 `console.warn` / `console.error` 会通过 Vite 的 `server.forwardConsole` 默认转发到终端。你可以在 renderer 配置中禁用或自定义：
+如果某个配置只应该作用于单独 target，可以写在 target 内：
 
 ```ts
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  },
+
+  electron: {
+    main: {
+      resolve: {
+        alias: {
+          '@main': './src/main'
+        }
+      }
+    },
+
+    preload: {},
+    renderer: {}
+  }
+})
+```
+
+### V8 Bytecode
+
+```ts
+import { defineConfig } from 'veldorajs'
+
+export default defineConfig({
+  electron: {
+    main: {
+      build: {
+        bytecode: true
+      }
+    },
+
+    preload: {
+      build: {
+        bytecode: true
+      }
+    },
+
+    renderer: {}
+  }
+})
+```
+
+### Oxc Plugin
+
+```ts
+import { defineConfig, oxcPlugin } from 'veldorajs'
+
+export default defineConfig({
+  electron: {
+    main: {
+      plugins: [oxcPlugin()]
+    },
+
+    preload: {},
+    renderer: {}
+  }
+})
+```
+
+### Renderer Console 转发
+
+Renderer 中的错误以及 `console.warn` / `console.error` 默认会转发到终端。
+
+```ts
+import { defineConfig } from 'veldorajs'
+
 export default defineConfig({
   electron: {
     renderer: {
@@ -111,55 +302,136 @@ export default defineConfig({
 })
 ```
 
-## 从 electron-vite 迁移
+## Node 侧 Import Helpers
 
-Veldora 保持 electron-vite 的 API，但需要 Vite 8（Vite+）。
+启用 `veldorajs/node` 后，这些 Veldora 特殊导入都可以获得完整类型：
 
-1. **更换依赖**
-
-   ```sh
-   npm rm electron-vite
-   npm i -D veldorajs
-   ```
-
-2. **重命名命令**：在 scripts 中把 `electron-vite` 改为 `veldora`（或 `vld`）。
-
-3. **重命名配置文件**：把 `electron.vite.config.*` 改为 `veldora.config.*`（或移入 `vite.config.ts`）。
-
-4. **将目标分组到 `electron` 下**，并将 SWC 插件切换为 Oxc：
-
-   ```diff
-   -import { defineConfig, swcPlugin } from 'electron-vite'
-   +import { defineConfig, oxcPlugin } from 'veldorajs'
-
-    export default defineConfig({
-   -  main: { plugins: [swcPlugin()] },
-   -  preload: {},
-   -  renderer: {}
-   +  electron: {
-   +    main: { plugins: [oxcPlugin()] },
-   +    preload: {},
-   +    renderer: {}
-   +  }
-    })
-   ```
-
-5. **升级到 Vite 8**。使用 Vite+ 时，将 `vite` 别名为 `@voidzero-dev/vite-plus-core`，并将 `vitest` 锁定为 Vite+ 捆绑的版本。
-
-## 快速开始
-
-```sh
-mkdir my-electron-app && cd my-electron-app
-npm init -y
-npm i -D veldorajs electron
+```ts
+import assetPath from './assets/config.json?asset'
+import unpackedAssetPath from './assets/model.bin?asset&asarUnpack'
+import workerModulePath from './worker?modulePath'
+import createWorker from './worker?nodeWorker'
+import nativeAddon from './native/addon.node'
+import loadWasm from './codec.wasm?loader'
 ```
 
-按上文添加 scripts 和 `veldora.config.ts`，然后运行 `veldora dev`。
+示例：
+
+```ts
+const worker = createWorker({
+  workerData: {
+    cwd: process.cwd()
+  }
+})
+
+const wasm = await loadWasm()
+```
+
+## CLI
+
+```sh
+vld dev [root]
+vld build [root]
+vld preview [root]
+```
+
+| 参数                           | 作用范围      | 说明                               |
+| ------------------------------ | ------------- | ---------------------------------- |
+| `-c, --config <file>`          | 全部          | 指定配置文件。                     |
+| `-m, --mode <mode>`            | 全部          | 设置环境模式。                     |
+| `--outDir <dir>`               | 全部          | 覆盖输出目录。                     |
+| `--sourcemap`                  | 全部          | 输出 Source Map。                  |
+| `--entry <file>`               | 全部          | 覆盖 Electron 入口文件。           |
+| `-w, --watch`                  | dev           | 文件变化后重新构建 main/preload。  |
+| `--inspect [port]`             | dev           | 开启 V8 Inspector。                |
+| `--inspectBrk [port]`          | dev           | 开启 V8 Inspector 并在启动时断点。 |
+| `--remoteDebuggingPort <port>` | dev           | 开启 Chromium Remote Debugging。   |
+| `--rendererOnly`               | dev           | 只启动 Renderer Dev Server。       |
+| `--noSandbox`                  | dev / preview | 禁用 Chromium Sandbox。            |
+| `--skipBuild`                  | preview       | 不重新构建，直接预览已有产物。     |
+
+开发过程中输入 `h` + Enter 可以查看 Vite 的交互式快捷键。
+
+- `r`：重启 Vite Server 与 Electron
+- `q`：关闭两者
+
+## Node API
+
+Veldora 也可以直接在 Node.js 中使用：
+
+```ts
+import { build, createServer, loadEnv, mergeConfig, preview } from 'veldorajs'
+```
+
+## 从 electron-vite 迁移
+
+### 1. 替换依赖
+
+```sh
+npm rm electron-vite
+npm i -D veldorajs
+```
+
+### 2. 修改 CLI
+
+```diff
+- "dev": "electron-vite dev"
++ "dev": "vld dev"
+```
+
+### 3. 修改配置文件
+
+把：
+
+```txt
+electron.vite.config.*
+```
+
+改成：
+
+```txt
+veldora.config.*
+```
+
+或者直接把 Electron 配置迁移进 `vite.config.*`。
+
+### 4. 把 targets 放入 `electron`
+
+```diff
+-import { defineConfig, swcPlugin } from 'electron-vite'
++import { defineConfig, oxcPlugin } from 'veldorajs'
+
+ export default defineConfig({
+-  main: { plugins: [swcPlugin()] },
+-  preload: {},
+-  renderer: {}
++  electron: {
++    main: { plugins: [oxcPlugin()] },
++    preload: {},
++    renderer: {}
++  }
+ })
+```
+
+### 5. 更新 ambient types
+
+```diff
+- "types": ["node", "electron-vite/node"]
++ "types": ["node", "veldorajs/node"]
+```
+
+### 6. 迁移 Vite+
+
+```sh
+vp migrate
+```
 
 ## 贡献
 
-参见 [贡献指南](CONTRIBUTING.md)。
+欢迎贡献。
 
-## 许可证
+提交 Pull Request 前请先阅读 [CONTRIBUTING.md](./CONTRIBUTING.md)。
+
+## License
 
 [MIT](./LICENSE) © byc

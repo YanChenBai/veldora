@@ -1,55 +1,89 @@
-<p>
-  <h1 align="center">Veldora</h1>
+<p align="center">
+  <img src="./assets/brand/veldora-hero.png" alt="Veldora" width="420" />
 </p>
 
-<p align="center">Next generation Electron build tooling based on Vite+</p>
+<h1 align="center">Veldora</h1>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/veldorajs"><img src="https://img.shields.io/npm/v/veldorajs?color=6988e6&label=version" alt="npm version"></a>
-  <a href="https://github.com/YanChenBai/veldora/blob/main/LICENSE"><img src="https://img.shields.io/github/license/YanChenBai/veldora?color=blue" alt="license"></a>
+  <strong>Build Delightful Desktop Apps</strong><br />
+  Next-generation Electron build tooling based on Vite+.
 </p>
 
 <p align="center">
-  <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a>
+  <a href="https://www.npmjs.com/package/veldorajs">
+    <img src="https://img.shields.io/npm/v/veldorajs?color=5b8def&label=npm" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/veldorajs">
+    <img src="https://img.shields.io/npm/dm/veldorajs?color=5b8def" alt="npm downloads" />
+  </a>
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/github/license/YanChenBai/veldora?color=5b8def" alt="license" />
+  </a>
+  <img src="https://img.shields.io/badge/Node-%5E20.19%20%7C%7C%20%3E%3D22.12-5b8def" alt="Node.js version" />
 </p>
 
-<br />
+<p align="center">
+  <a href="./README.md">English</a> ·
+  <a href="./README.zh-CN.md">简体中文</a>
+</p>
 
-## Why a Fork
+---
 
-Veldora is a fork of [electron-vite](https://github.com/alex8088/electron-vite) rebuilt on [Vite+](https://viteplus.dev). electron-vite targets Vite with esbuild and Rollup; Vite+ unifies the stack on Rolldown and Oxc for faster builds and one `vite.config.ts` for the entire workflow. Veldora brings that to Electron while keeping the electron-vite API familiar.
+## What is Veldora?
 
-## What's Changed
+Veldora is a modern Electron build tool rebuilt around [Vite+](https://viteplus.dev).
 
-- ⚡️ Rebuilt on Vite+ (Rolldown + Oxc) instead of esbuild + Rollup
-- 📄 Electron targets load from a unified `vite.config.ts` as well as `veldora.config.*`
-- 🧭 Shared `resolve` options — including `tsconfigPaths` — applied across main, preload and renderer
-- 🗂 Targets grouped under an `electron` config namespace
-- 🦀 `swcPlugin` replaced with `oxcPlugin` (Vite's built-in Oxc transformer)
-- ⌨️ Vite interactive dev shortcuts with coordinated Electron restart and shutdown
-- 🖥 Browser errors and `console.warn` / `console.error` forwarded to the terminal by default
+It keeps the familiar development model of `electron-vite`, while moving the underlying toolchain to a newer Vite+ stack powered by Rolldown and Oxc.
 
-## Features
+Electron `main`, `preload`, and `renderer` targets live under one `electron` namespace and can be configured from either:
 
-- ⚡️ Powered by [Vite+](https://viteplus.dev) and used the same way as Vite
-- 🛠 Sensible defaults pre-configured for Electron main, preload and renderer
-- 💡 Optimized asset handling for the Electron main process
-- 🚀 Fast HMR and hot reloading
-- 🔥 Isolated builds for multi-entry applications
-- ✨ Simplified multi-threading development
-- 🔒 Compile code to V8 bytecode to protect source code
-- 🔌 Easy to debug in VSCode and WebStorm
-- 📦 TypeScript, Vue, React, Svelte, SolidJS and more out of the box
+- `veldora.config.*`
+- `vite.config.*`
 
-## Installation
+When both are present, `veldora.config.*` takes precedence.
+
+## Highlights
+
+|                                  |                                                                               |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| ⚡ **Vite+ native**              | Rolldown + Oxc based workflow.                                                |
+| 🧩 **Unified Electron config**   | Configure `main`, `preload`, and `renderer` together.                         |
+| 🧭 **Shared resolution**         | Reuse aliases and `resolve.tsconfigPaths` across Electron targets.            |
+| 🔒 **V8 bytecode**               | Compile main/preload output to V8 bytecode.                                   |
+| 🧵 **Node helpers**              | Typed assets, workers, module paths, WASM, and native modules.                |
+| 🖥 **Developer-friendly runtime** | Coordinated restarts, terminal-forwarded renderer errors, and Vite shortcuts. |
+
+## Quick Start
+
+### 1. Requirements
+
+Veldora currently expects:
+
+- Node.js `^20.19.0 || >=22.12.0`
+- Vite `^8.0.0`
+- Electron
+
+A Vite+ workspace is recommended.
+
+If your project is not on Vite+ yet:
 
 ```sh
-npm i -D veldorajs
+vp migrate
 ```
 
-## Usage
+### 2. Install
 
-Add the commands to your `package.json` and run them with `npx vld`:
+```sh
+npm i -D veldorajs electron
+```
+
+or:
+
+```sh
+pnpm add -D veldorajs electron
+```
+
+### 3. Add scripts
 
 ```json
 {
@@ -61,14 +95,106 @@ Add the commands to your `package.json` and run them with `npx vld`:
 }
 ```
 
-`veldora` is the full command name; `vld` is the short alias.
+`veldora` is the full CLI name. `vld` is the short alias.
+
+### 4. Add Veldora Node types
+
+For TypeScript projects, add `veldorajs/node` to the TypeScript config used by Electron main/preload code:
+
+```jsonc
+// tsconfig.node.json
+{
+  "compilerOptions": {
+    "types": ["node", "veldorajs/node"]
+  },
+  "include": ["vite.config.*", "veldora.config.*", "src/main/**/*", "src/preload/**/*"]
+}
+```
+
+Or use a declaration file:
+
+```ts
+/// <reference types="veldorajs/node" />
+```
+
+`veldorajs/node` is a **type-only entry**. Do not import it at runtime.
+
+It provides ambient types for:
+
+- `electron` on Vite `UserConfig`
+- `process.env.ELECTRON_RENDERER_URL`
+- `?nodeWorker`
+- `?modulePath`
+- `?asset`
+- `?asset&asarUnpack`
+- native `.node` imports
+- `.wasm?loader`
+
+> If you already use `compilerOptions.types`, remember that it acts as an allow-list.
+
+### 5. Configure Electron
+
+#### Option A — `veldora.config.ts`
+
+```ts
+import { defineConfig } from 'veldorajs'
+
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  },
+
+  electron: {
+    main: {},
+    preload: {},
+    renderer: {}
+  }
+})
+```
+
+#### Option B — unified `vite.config.ts`
+
+```ts
+import { defineConfig } from 'vite-plus'
+
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  },
+
+  electron: {
+    main: {},
+    preload: {},
+    renderer: {}
+  }
+})
+```
+
+Shared `resolve` options apply to all Electron targets. Target-specific options take precedence.
+
+### 6. Start developing
+
+```sh
+npm run dev
+```
+
+Build:
+
+```sh
+npm run build
+```
+
+Preview:
+
+```sh
+npm run preview
+```
 
 ## Configuration
 
-`veldora` resolves `veldora.config.*` or `vite.config.*` from the project root, with `veldora.config.*` taking precedence when both exist.
+### Shared aliases and tsconfig paths
 
 ```ts
-// veldora.config.ts
 import { defineConfig } from 'veldorajs'
 
 export default defineConfig({
@@ -78,6 +204,7 @@ export default defineConfig({
       '@': './src'
     }
   },
+
   electron: {
     main: {},
     preload: {},
@@ -86,17 +213,77 @@ export default defineConfig({
 })
 ```
 
-Shared `resolve` options apply to all three targets; per-target options take precedence.
-
-### Dev shortcuts
-
-The renderer server exposes Vite's interactive CLI shortcuts. Press `h + enter` to list them. `r` restarts the Vite server and the Electron app; `q` closes both.
-
-### Forwarding console
-
-Browser errors and `console.warn` / `console.error` are forwarded to the terminal through Vite's `server.forwardConsole`. Disable or customize it in the renderer config:
+Target-specific options can override shared ones:
 
 ```ts
+export default defineConfig({
+  resolve: {
+    tsconfigPaths: true
+  },
+
+  electron: {
+    main: {
+      resolve: {
+        alias: {
+          '@main': './src/main'
+        }
+      }
+    },
+
+    preload: {},
+    renderer: {}
+  }
+})
+```
+
+### V8 bytecode
+
+```ts
+import { defineConfig } from 'veldorajs'
+
+export default defineConfig({
+  electron: {
+    main: {
+      build: {
+        bytecode: true
+      }
+    },
+
+    preload: {
+      build: {
+        bytecode: true
+      }
+    },
+
+    renderer: {}
+  }
+})
+```
+
+### Oxc plugin
+
+```ts
+import { defineConfig, oxcPlugin } from 'veldorajs'
+
+export default defineConfig({
+  electron: {
+    main: {
+      plugins: [oxcPlugin()]
+    },
+
+    preload: {},
+    renderer: {}
+  }
+})
+```
+
+### Renderer console forwarding
+
+Renderer errors and `console.warn` / `console.error` are forwarded to the terminal by default.
+
+```ts
+import { defineConfig } from 'veldorajs'
+
 export default defineConfig({
   electron: {
     renderer: {
@@ -111,54 +298,133 @@ export default defineConfig({
 })
 ```
 
-## Migration from electron-vite
+## Node-side Import Helpers
 
-Veldora keeps the electron-vite API but requires Vite 8 (Vite+).
+After enabling `veldorajs/node`, Veldora-specific imports are type-safe:
 
-1. **Swap the dependency**
-
-   ```sh
-   npm rm electron-vite
-   npm i -D veldorajs
-   ```
-
-2. **Rename the command** in your scripts: `electron-vite` → `veldora` (or `vld`).
-
-3. **Rename the config file**: `electron.vite.config.*` → `veldora.config.*` (or move into `vite.config.ts`).
-
-4. **Group targets under `electron`** and switch the SWC plugin to Oxc:
-
-   ```diff
-   -import { defineConfig, swcPlugin } from 'electron-vite'
-   +import { defineConfig, oxcPlugin } from 'veldorajs'
-
-    export default defineConfig({
-   -  main: { plugins: [swcPlugin()] },
-   -  preload: {},
-   -  renderer: {}
-   +  electron: {
-   +    main: { plugins: [oxcPlugin()] },
-   +    preload: {},
-   +    renderer: {}
-   +  }
-    })
-   ```
-
-5. **Upgrade to Vite 8**. With Vite+, alias `vite` to `@voidzero-dev/vite-plus-core` and pin `vitest` to the version bundled by Vite+.
-
-## Getting Started
-
-```sh
-mkdir my-electron-app && cd my-electron-app
-npm init -y
-npm i -D veldorajs electron
+```ts
+import assetPath from './assets/config.json?asset'
+import unpackedAssetPath from './assets/model.bin?asset&asarUnpack'
+import workerModulePath from './worker?modulePath'
+import createWorker from './worker?nodeWorker'
+import nativeAddon from './native/addon.node'
+import loadWasm from './codec.wasm?loader'
 ```
 
-Add the scripts and a `veldora.config.ts` as shown above, then run `veldora dev`.
+Example:
 
-## Contribution
+```ts
+const worker = createWorker({
+  workerData: {
+    cwd: process.cwd()
+  }
+})
 
-See [Contributing Guide](CONTRIBUTING.md).
+const wasm = await loadWasm()
+```
+
+## CLI
+
+```sh
+vld dev [root]
+vld build [root]
+vld preview [root]
+```
+
+| Option                         | Scope         | Description                                   |
+| ------------------------------ | ------------- | --------------------------------------------- |
+| `-c, --config <file>`          | all           | Use a specific config file.                   |
+| `-m, --mode <mode>`            | all           | Set the environment mode.                     |
+| `--outDir <dir>`               | all           | Override the output directory.                |
+| `--sourcemap`                  | all           | Emit source maps.                             |
+| `--entry <file>`               | all           | Override the Electron entry file.             |
+| `-w, --watch`                  | dev           | Rebuild main/preload on file changes.         |
+| `--inspect [port]`             | dev           | Enable the V8 inspector.                      |
+| `--inspectBrk [port]`          | dev           | Enable the V8 inspector and break on startup. |
+| `--remoteDebuggingPort <port>` | dev           | Enable Chromium remote debugging.             |
+| `--rendererOnly`               | dev           | Start only the renderer dev server.           |
+| `--noSandbox`                  | dev / preview | Disable the Chromium sandbox.                 |
+| `--skipBuild`                  | preview       | Preview existing output without rebuilding.   |
+
+During development, press `h` + Enter to show Vite's interactive shortcuts.
+
+- `r` restarts the Vite server and Electron app
+- `q` shuts both down
+
+## Programmatic API
+
+```ts
+import { build, createServer, loadEnv, mergeConfig, preview } from 'veldorajs'
+```
+
+## Migration from electron-vite
+
+### 1. Replace the dependency
+
+```sh
+npm rm electron-vite
+npm i -D veldorajs
+```
+
+### 2. Rename the CLI
+
+```diff
+- "dev": "electron-vite dev"
++ "dev": "vld dev"
+```
+
+### 3. Move the config
+
+Rename:
+
+```txt
+electron.vite.config.*
+```
+
+to:
+
+```txt
+veldora.config.*
+```
+
+or move the Electron config into `vite.config.*`.
+
+### 4. Group targets under `electron`
+
+```diff
+-import { defineConfig, swcPlugin } from 'electron-vite'
++import { defineConfig, oxcPlugin } from 'veldorajs'
+
+ export default defineConfig({
+-  main: { plugins: [swcPlugin()] },
+-  preload: {},
+-  renderer: {}
++  electron: {
++    main: { plugins: [oxcPlugin()] },
++    preload: {},
++    renderer: {}
++  }
+ })
+```
+
+### 5. Update ambient types
+
+```diff
+- "types": ["node", "electron-vite/node"]
++ "types": ["node", "veldorajs/node"]
+```
+
+### 6. Migrate to Vite+
+
+```sh
+vp migrate
+```
+
+## Contributing
+
+Contributions are welcome.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
 
 ## License
 
