@@ -17,7 +17,8 @@ export default defineConfig({
     insertFinalNewline: true,
     singleQuote: true,
     semi: false,
-    trailingComma: 'none'
+    trailingComma: 'none',
+    ignorePatterns: ['CHANGELOG.md']
   },
   test: {
     environment: 'node',
