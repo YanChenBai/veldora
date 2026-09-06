@@ -1,4 +1,5 @@
 import 'vite'
+import 'vite-plus'
 import type { ElectronConfig } from './dist/index.mjs'
 
 // node worker
@@ -43,6 +44,15 @@ declare module '*.wasm?loader' {
 }
 
 declare module 'vite' {
+  interface UserConfig {
+    /**
+     * Vite config options for the electron main, preload and renderer processes.
+     */
+    electron?: ElectronConfig
+  }
+}
+
+declare module 'vite-plus' {
   interface UserConfig {
     /**
      * Vite config options for the electron main, preload and renderer processes.
