@@ -1,5 +1,3 @@
-onlyBuiltDependencies:
-  - esbuild
 overrides:
   vite@*: 'catalog:'
 catalog:
