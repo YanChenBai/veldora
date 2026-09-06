@@ -26,9 +26,6 @@ importers:
       cac:
         specifier: ^7.0.0
         version: 7.0.0
-      esbuild:
-        specifier: ^0.28.0
-        version: 0.28.2
       magic-string:
         specifier: ^0.30.21
         version: 0.30.21
@@ -1970,6 +1967,7 @@ snapshots:
       '@esbuild/win32-arm64': 0.28.2
       '@esbuild/win32-ia32': 0.28.2
       '@esbuild/win32-x64': 0.28.2
+    optional: true
 
   escalade@3.2.0: {}
 

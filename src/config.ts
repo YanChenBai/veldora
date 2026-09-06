@@ -1,20 +1,17 @@
 import path from 'node:path'
 import fs from 'node:fs'
-import { pathToFileURL } from 'node:url'
-import { createRequire } from 'node:module'
 import colors from 'picocolors'
 import {
   type UserConfig as ViteConfig,
   type ConfigEnv,
   type PluginOption,
-  type Plugin,
   type BuildEnvironmentOptions as ViteBuildOptions,
   type LogLevel,
   createLogger,
+  loadConfigFromFile as viteLoadConfigFromFile,
   mergeConfig,
   normalizePath
 } from 'vite'
-import { build } from 'esbuild'
 
 import {
   electronMainConfigPresetPlugin,
@@ -32,7 +29,7 @@ import modulePathPlugin from './plugins/modulePath'
 import isolateEntriesPlugin from './plugins/isolateEntries'
 import { type ExternalOptions, externalizeDepsPlugin } from './plugins/externalizeDeps'
 import { type BytecodeOptions, bytecodePlugin } from './plugins/bytecode'
-import { isObject, isFilePathESM, deepClone, asyncFlatten } from './utils'
+import { deepClone } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
 
@@ -412,31 +409,23 @@ function resetOutDir(config: ViteConfig, outDir: string, subOutDir: string): voi
 async function resolveConfigDrivenPlugins(
   config: MainViteConfig | PreloadViteConfig
 ): Promise<PluginOption[]> {
-  const userPlugins = (await asyncFlatten(config.plugins || [])).filter(Boolean) as Plugin[]
-
   const configDrivenPlugins: PluginOption[] = []
 
-  const hasExternalizeDepsPlugin = userPlugins.some((p) => p.name === 'vite:externalize-deps')
-  if (!hasExternalizeDepsPlugin) {
-    const externalOptions = config.build?.externalizeDeps ?? true
-    if (externalOptions) {
-      if (isOptions<ExternalOptions>(externalOptions)) {
-        configDrivenPlugins.push(externalizeDepsPlugin(externalOptions))
-      } else {
-        configDrivenPlugins.push(externalizeDepsPlugin())
-      }
+  const externalOptions = config.build?.externalizeDeps ?? true
+  if (externalOptions) {
+    if (isOptions<ExternalOptions>(externalOptions)) {
+      configDrivenPlugins.push(externalizeDepsPlugin(externalOptions))
+    } else {
+      configDrivenPlugins.push(externalizeDepsPlugin())
     }
   }
 
-  const hasBytecodePlugin = userPlugins.some((p) => p.name === 'vite:bytecode')
-  if (!hasBytecodePlugin) {
-    const bytecodeOptions = config.build?.bytecode
-    if (bytecodeOptions) {
-      if (isOptions<BytecodeOptions>(bytecodeOptions)) {
-        configDrivenPlugins.push(bytecodePlugin(bytecodeOptions))
-      } else {
-        configDrivenPlugins.push(bytecodePlugin())
-      }
+  const bytecodeOptions = config.build?.bytecode
+  if (bytecodeOptions) {
+    if (isOptions<BytecodeOptions>(bytecodeOptions)) {
+      configDrivenPlugins.push(bytecodePlugin(bytecodeOptions))
+    } else {
+      configDrivenPlugins.push(bytecodePlugin())
     }
   }
 
@@ -477,18 +466,9 @@ export async function loadConfigFromFile(
     }
   }
 
-  const isESM = isFilePathESM(resolvedPath)
-
   try {
-    const { code, dependencies } = await bundleConfigFile(resolvedPath, isESM)
-    const configExport = await loadConfigFormBundledFile(configRoot, resolvedPath, code, isESM)
-
-    const config = await (typeof configExport === 'function'
-      ? configExport(configEnv)
-      : configExport)
-    if (!isObject(config)) {
-      throw new Error(`config must export or return an object`)
-    }
+    const loaded = await viteLoadConfigFromFile(configEnv, resolvedPath, configRoot, logLevel)
+    const config = (loaded?.config ?? {}) as unknown as UserConfig
 
     if (!ignoreConfigWarning) {
       const missingFields = ['main', 'renderer', 'preload'].filter(
@@ -502,9 +482,9 @@ export async function loadConfigFromFile(
     }
 
     return {
-      path: normalizePath(resolvedPath),
+      path: normalizePath(loaded?.path ?? resolvedPath),
       config,
-      dependencies
+      dependencies: loaded?.dependencies ?? []
     }
   } catch (e) {
     createLogger(logLevel).error(colors.red(`failed to load config from ${resolvedPath}`), {
@@ -524,110 +504,4 @@ function findConfigFile(configRoot: string, names: string[], extensions: string[
     }
   }
   return ''
-}
-
-async function bundleConfigFile(
-  fileName: string,
-  isESM: boolean
-): Promise<{ code: string; dependencies: string[] }> {
-  const dirnameVarName = '__veldora_injected_dirname'
-  const filenameVarName = '__veldora_injected_filename'
-  const importMetaUrlVarName = '__veldora_injected_import_meta_url'
-  const result = await build({
-    absWorkingDir: process.cwd(),
-    entryPoints: [fileName],
-    write: false,
-    target: ['node20'],
-    platform: 'node',
-    bundle: true,
-    format: isESM ? 'esm' : 'cjs',
-    sourcemap: false,
-    metafile: true,
-    define: {
-      __dirname: dirnameVarName,
-      __filename: filenameVarName,
-      'import.meta.url': importMetaUrlVarName
-    },
-    plugins: [
-      {
-        name: 'externalize-deps',
-        setup(build): void {
-          build.onResolve({ filter: /.*/ }, (args) => {
-            const id = args.path
-            if (id[0] !== '.' && !path.isAbsolute(id)) {
-              return {
-                external: true
-              }
-            }
-            return null
-          })
-        }
-      },
-      {
-        name: 'replace-import-meta',
-        setup(build): void {
-          build.onLoad({ filter: /\.[cm]?[jt]s$/ }, async (args) => {
-            const contents = await fs.promises.readFile(args.path, 'utf8')
-            const injectValues =
-              `const ${dirnameVarName} = ${JSON.stringify(path.dirname(args.path))};` +
-              `const ${filenameVarName} = ${JSON.stringify(args.path)};` +
-              `const ${importMetaUrlVarName} = ${JSON.stringify(pathToFileURL(args.path).href)};`
-
-            return {
-              loader: args.path.endsWith('ts') ? 'ts' : 'js',
-              contents: injectValues + contents
-            }
-          })
-        }
-      }
-    ]
-  })
-  const { text } = result.outputFiles[0]
-  return {
-    code: text,
-    dependencies: result.metafile ? Object.keys(result.metafile.inputs) : []
-  }
-}
-
-interface NodeModuleWithCompile extends NodeModule {
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  _compile(code: string, filename: string): any
-}
-
-const _require = createRequire(import.meta.url)
-async function loadConfigFormBundledFile(
-  configRoot: string,
-  configFile: string,
-  bundledCode: string,
-  isESM: boolean
-): Promise<ElectronViteConfigExport> {
-  if (isESM) {
-    const fileNameTmp = path.resolve(configRoot, `${CONFIG_FILE_NAME}.${Date.now()}.mjs`)
-    fs.writeFileSync(fileNameTmp, bundledCode)
-
-    const fileUrl = pathToFileURL(fileNameTmp)
-    try {
-      return (await import(fileUrl.href)).default
-    } finally {
-      try {
-        fs.unlinkSync(fileNameTmp)
-      } catch {}
-    }
-  } else {
-    const extension = path.extname(configFile)
-    const realFileName = fs.realpathSync(configFile)
-    const loaderExt = extension in _require.extensions ? extension : '.js'
-    const defaultLoader = _require.extensions[loaderExt]!
-    _require.extensions[loaderExt] = (module: NodeModule, filename: string): void => {
-      if (filename === realFileName) {
-        ;(module as NodeModuleWithCompile)._compile(bundledCode, filename)
-      } else {
-        defaultLoader(module, filename)
-      }
-    }
-    delete _require.cache[_require.resolve(configFile)]
-    const raw = _require(configFile)
-    _require.extensions[loaderExt] = defaultLoader
-    return raw.__esModule ? raw.default : raw
-  }
 }

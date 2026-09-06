@@ -8,8 +8,6 @@ export interface ExternalOptions {
 
 /**
  * Automatically externalize dependencies.
- *
- * @deprecated use `build.externalizeDeps` config option instead
  */
 export function externalizeDepsPlugin(options: ExternalOptions = {}): Plugin | null {
   const { exclude = [], include = [] } = options
