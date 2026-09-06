@@ -44,7 +44,8 @@
     "lint": "vp lint",
     "check": "vp check",
     "test": "vp test run",
-    "build": "vp check && vp pack"
+    "build": "vp check && vp pack",
+    "release": "vp run check && vp run test && changelogen --release"
   },
   "dependencies": {
     "@babel/core": "^7.29.0",
