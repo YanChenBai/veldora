@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.0.2
+
+[compare changes](https://github.com/YanChenBai/veldora/compare/v0.0.1...v0.0.2)
+
+### 🚀 Enhancements
+
+- **types:** Support vite-plus type augmentation ([2763c6e](https://github.com/YanChenBai/veldora/commit/2763c6e))
+- **server:** Restore interactive CLI shortcuts ([397a4b7](https://github.com/YanChenBai/veldora/commit/397a4b7))
+
+### 📖 Documentation
+
+- Refresh README and add brand assets ([aa80606](https://github.com/YanChenBai/veldora/commit/aa80606))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.1
 
 [compare changes](https://github.com/YanChenBai/veldora/compare/v6.0.0-beta.1...v0.0.1)
