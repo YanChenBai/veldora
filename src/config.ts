@@ -100,7 +100,28 @@ interface BaseViteConfig<T> extends Omit<ViteConfig, 'build' | 'resolve'> {
   build?: T
 }
 
-export interface MainViteConfig extends BaseViteConfig<MainBuildOptions> {}
+export type ConsoleFilter = (line: string) => boolean
+
+export interface MainViteConfig extends BaseViteConfig<MainBuildOptions> {
+  /**
+   * Filter the Electron main process console output (stdout and stderr)
+   * during development.
+   *
+   * Receives each line of output from the main process and return `true` to
+   * suppress it. Useful for hiding noisy, non-actionable messages such as
+   * Chromium's P2P/STUN address resolution errors.
+   *
+   * @example
+   * ```ts
+   * electron: {
+   *   main: {
+   *     filterConsole: (line) => line.includes('Failed to resolve address')
+   *   }
+   * }
+   * ```
+   */
+  filterConsole?: ConsoleFilter
+}
 
 export interface PreloadViteConfig extends BaseViteConfig<PreloadBuildOptions> {}
 

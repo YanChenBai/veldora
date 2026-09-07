@@ -2,6 +2,8 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import { type ChildProcess, spawn } from 'node:child_process'
+import type { Readable, Writable } from 'node:stream'
+import type { ConsoleFilter } from './config'
 import { loadPackageData } from './utils'
 
 const _require = createRequire(import.meta.url)
@@ -133,7 +135,10 @@ export function getElectronChromeTarget(): string {
   return ''
 }
 
-export function startElectron(root: string | undefined): ChildProcess {
+export function startElectron(
+  root: string | undefined,
+  filterConsole?: ConsoleFilter
+): ChildProcess {
   ensureElectronEntryFile(root)
 
   const electronPath = getElectronPath()
@@ -166,9 +171,54 @@ export function startElectron(root: string | undefined): ChildProcess {
   // On Windows, a GUI child (electron) inheriting the console input would
   // otherwise steal keystrokes from the parent's readline.
   const ps = spawn(electronPath, [entry].concat(args), {
-    stdio: ['ignore', 'inherit', 'inherit']
+    stdio: ['ignore', filterConsole ? 'pipe' : 'inherit', filterConsole ? 'pipe' : 'inherit']
   })
+  if (filterConsole && ps.stdout && ps.stderr) {
+    pipeFilteredOutput(ps.stdout, process.stdout, filterConsole)
+    pipeFilteredOutput(ps.stderr, process.stderr, filterConsole)
+  }
   ps.on('close', process.exit)
 
   return ps
+}
+
+/**
+ * Filter a child process output stream line by line, forwarding only the
+ * lines for which `filter` returns `false`.
+ */
+function pipeFilteredOutput(source: Readable, dest: Writable, filter: ConsoleFilter): void {
+  let buffer = ''
+  source.setEncoding('utf8')
+  source.on('data', (chunk: string) => {
+    const result = filterConsoleOutput(chunk, buffer, filter)
+    buffer = result.buffer
+    if (result.output) dest.write(result.output)
+  })
+  source.on('end', () => {
+    if (buffer && !filter(buffer)) dest.write(buffer)
+  })
+}
+
+/**
+ * Accumulate console output chunks and filter complete lines.
+ *
+ * @returns the remaining partial line and the output to write.
+ */
+export function filterConsoleOutput(
+  chunk: string,
+  buffer: string,
+  filter: ConsoleFilter
+): { buffer: string; output: string } {
+  let text = buffer + chunk
+  let output = ''
+  let index: number
+  while ((index = text.indexOf('\n')) !== -1) {
+    let line = text.slice(0, index)
+    text = text.slice(index + 1)
+    if (line.endsWith('\r')) line = line.slice(0, -1)
+    if (!filter(line)) {
+      output += line + '\n'
+    }
+  }
+  return { buffer: text, output }
 }
