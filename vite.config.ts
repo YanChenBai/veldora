@@ -8,7 +8,7 @@ export default defineConfig({
     outDir: 'dist'
   },
   staged: {
-    '*.{js,ts,tsx}': 'vp check --fix'
+    '*': 'vp check --fix'
   },
   fmt: {
     useTabs: false,
