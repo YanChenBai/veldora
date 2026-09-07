@@ -1,6 +1,7 @@
 import path from 'node:path'
 import fs from 'node:fs'
 import colors from 'picocolors'
+import type { DtsOptions } from 'vite-plus/pack'
 import {
   type UserConfig as ViteConfig,
   type ConfigEnv,
@@ -148,6 +149,25 @@ export interface TypegenOptions {
    * ```
    */
   entries: Record<string, string>
+  /**
+   * Options passed through to the rolldown-plugin-dts declaration pipeline
+   * used to generate `veldora-types`. Overrides the defaults Veldora applies.
+   *
+   * `emitDtsOnly` is always enabled and cannot be overridden, since
+   * `veldora-types` is a type-only package.
+   *
+   * @example
+   * ```ts
+   * typegen: {
+   *   entries: { ipc: 'src/main/ipc.ts' },
+   *   // Required when the project tsconfig uses `references`.
+   *   dts: { build: true }
+   * }
+   * ```
+   *
+   * @see https://github.com/voidzero-dev/rolldown-plugin-dts
+   */
+  dts?: Omit<DtsOptions, 'emitDtsOnly'>
 }
 
 export interface VeldoraConfig {

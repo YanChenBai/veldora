@@ -1,9 +1,10 @@
-import type { UserConfig } from 'vite-plus/pack'
+import type { DtsOptions, UserConfig } from 'vite-plus/pack'
 
 export interface TypegenPackOptions {
   entries: Record<string, string>
   outDir: string
   root: string
+  dts?: Omit<DtsOptions, 'emitDtsOnly'>
 }
 
 export interface TypegenWatcher {
@@ -18,7 +19,9 @@ function resolvePackConfig(options: TypegenPackOptions): UserConfig {
     platform: 'neutral',
     fixedExtension: false,
     clean: true,
-    dts: { emitDtsOnly: true },
+    // `emitDtsOnly` is always enforced: `veldora-types` is a type-only
+    // package and must never emit runtime chunks into `.veldora/types`.
+    dts: { ...options.dts, emitDtsOnly: true },
     // Force a stable `.d.ts` extension regardless of the project's
     // `package.json` `type` field.
     outExtensions: () => ({ dts: '.d.ts' }),

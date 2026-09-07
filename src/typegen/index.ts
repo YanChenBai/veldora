@@ -30,7 +30,7 @@ export async function generateTypes(typegen: TypegenOptions, root: string): Prom
 
   ensureVeldoraDir(root)
   writeTypegenTsconfig(root)
-  await buildDeclarations({ entries, outDir, root })
+  await buildDeclarations({ entries, outDir, root, dts: typegen.dts })
   writeTypePackageIndex(root, entries)
 }
 
@@ -49,7 +49,12 @@ export async function watchTypes(
   ensureVeldoraDir(root)
   writeTypegenTsconfig(root)
 
-  const watcher: TypegenWatcher = await watchDeclarations({ entries, outDir, root })
+  const watcher: TypegenWatcher = await watchDeclarations({
+    entries,
+    outDir,
+    root,
+    dts: typegen.dts
+  })
 
   // The watcher performs a one-time `clean` of the output directory when it
   // starts, so regenerate the root `index.d.ts` afterwards.
