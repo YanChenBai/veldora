@@ -11,18 +11,33 @@ import colors from 'picocolors'
 import { type InlineConfig, resolveConfig } from './config'
 import { resolveHostname } from './utils'
 import { startElectron } from './electron'
+import { generateTypes, watchTypes, type TypegenController } from './typegen'
 
 export async function createServer(
   inlineConfig: InlineConfig = {},
   options: { rendererOnly?: boolean }
 ): Promise<void> {
   process.env.NODE_ENV_ELECTRON_VITE = 'development'
+  const root = inlineConfig.root || process.cwd()
   const config = await resolveConfig(inlineConfig, 'serve', 'development')
   if (config.config) {
     const logger = createLogger(inlineConfig.logLevel)
 
     let server: ViteDevServer | undefined
     let ps: ChildProcess | undefined
+    let typegen: TypegenController | undefined
+
+    const typegenOptions = config.config?.veldora?.typegen
+    if (typegenOptions) {
+      await generateTypes(typegenOptions, root)
+      typegen = await watchTypes(typegenOptions, root)
+
+      logger.info(
+        colors.green(
+          `\nveldora typegen generated ${Object.keys(typegenOptions.entries).length} entries`
+        )
+      )
+    }
 
     const stopElectron = (): void => {
       if (ps) {
@@ -155,6 +170,7 @@ export async function createServer(
           async action(server): Promise<void> {
             try {
               stopElectron()
+              await typegen?.close()
               await server.close()
             } finally {
               process.exit()

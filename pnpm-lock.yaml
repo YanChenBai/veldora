@@ -35,6 +35,9 @@ importers:
       vite:
         specifier: npm:@voidzero-dev/vite-plus-core@0.3.0
         version: '@voidzero-dev/vite-plus-core@0.3.0(@types/node@22.19.15)(esbuild@0.28.2)(jiti@2.7.0)(typescript@5.9.3)(yaml@2.8.3)'
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.3.0(@types/node@22.19.15)(@voidzero-dev/vite-plus-core@0.3.0(@types/node@22.19.15)(esbuild@0.28.2)(jiti@2.7.0)(typescript@5.9.3)(yaml@2.8.3))(esbuild@0.28.2)(jiti@2.7.0)(typescript@5.9.3)(yaml@2.8.3)
     devDependencies:
       '@types/babel__core':
         specifier: ^7.20.5
@@ -48,9 +51,6 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
-      vite-plus:
-        specifier: 'catalog:'
-        version: 0.3.0(@types/node@22.19.15)(@voidzero-dev/vite-plus-core@0.3.0(@types/node@22.19.15)(esbuild@0.28.2)(jiti@2.7.0)(typescript@5.9.3)(yaml@2.8.3))(esbuild@0.28.2)(jiti@2.7.0)(typescript@5.9.3)(yaml@2.8.3)
 
 packages:
 

@@ -50,6 +50,7 @@ Electron 的 `main`、`preload`、`renderer` 三个目标统一放在 `veldora` 
 | 🧩 **统一 Electron 配置** | `main`、`preload`、`renderer` 放在同一个 `veldora` 命名空间。     |
 | 🧭 **共享解析配置**       | alias 与 `resolve.tsconfigPaths` 可以跨 Electron 目标复用。       |
 | 🔒 **V8 Bytecode**        | main / preload 输出可编译为 V8 字节码。                           |
+| 🔤 **Typegen**            | 从 TypeScript 入口自动生成仅类型包 `veldora-types`。              |
 | 🧵 **Node 侧辅助能力**    | 内置 assets、workers、module path、WASM、native module 类型支持。 |
 | 🖥 **更好的开发体验**      | Electron 协同重启、Renderer 错误转发到终端、Vite 交互快捷键。     |
 
@@ -299,6 +300,88 @@ export default defineConfig({
   }
 })
 ```
+
+### 过滤主进程输出
+
+Electron 主进程经常会往终端打印一些无意义的噪声信息 —— 例如 Chromium 的 P2P/STUN 地址解析错误。开发模式下，可以通过 `veldora.main.filterConsole` 过滤它们；回调会接收 stdout/stderr 的每一行，返回 `true` 时该行会被隐藏。
+
+```ts
+import { defineConfig } from 'veldorajs'
+
+export default defineConfig({
+  veldora: {
+    main: {
+      filterConsole: (line) => line.includes('Failed to resolve address')
+    }
+  }
+})
+```
+
+### Typegen
+
+Veldora 可以从你的 TypeScript 入口自动生成一个仅类型包 `veldora-types`，让 `main`、`preload`、`renderer` 共享类型，无需手工维护 shared package。
+
+```ts
+import { defineConfig } from 'veldorajs'
+
+export default defineConfig({
+  veldora: {
+    main: {},
+    preload: {},
+    renderer: {},
+
+    typegen: {
+      entries: {
+        ipc: 'src/main/ipc.ts',
+        services: 'src/main/services.ts'
+      }
+    }
+  }
+})
+```
+
+每个 entry key 都会成为 `veldora-types` 的子路径（例如 `ipc` → `veldora-types/ipc`）。
+
+Veldora 会生成：
+
+```txt
+.veldora/
+├─ tsconfig.json
+└─ types/
+   ├─ index.d.ts
+   ├─ ipc.d.ts
+   └─ services.d.ts
+```
+
+通过 `extends` 把生成的别名引入你自己的 tsconfig：
+
+```jsonc
+// tsconfig.json
+{
+  "extends": "./.veldora/tsconfig.json",
+  "compilerOptions": {
+    // ...
+  }
+}
+```
+
+Veldora 不会修改你的 tsconfig —— `.veldora/tsconfig.json` 会自动重新生成，并且只注册 `veldora-types` 与 `veldora-types/*` 别名。
+
+之后可以在任何地方（preload / renderer / main）用仅类型导入消费这些类型：
+
+```ts
+import type { AppRouter } from 'veldora-types'
+import type { AppRouter } from 'veldora-types/ipc'
+```
+
+`veldora-types` 是仅类型包，运行时代导入会导致构建失败：
+
+```ts
+// ❌ 构建报错
+import { AppRouter } from 'veldora-types/ipc'
+```
+
+开发模式下，编辑 entry（及其依赖）时声明会自动重新生成。在 `dev` 与 `build` 中，Typegen 都会先于 main / preload / renderer 运行。
 
 ## Node 侧 Import Helpers
 

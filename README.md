@@ -50,6 +50,7 @@ When both are present, `veldora.config.*` takes precedence.
 | 🧩 **Unified Electron config**   | Configure `main`, `preload`, and `renderer` together.                         |
 | 🧭 **Shared resolution**         | Reuse aliases and `resolve.tsconfigPaths` across Electron targets.            |
 | 🔒 **V8 bytecode**               | Compile main/preload output to V8 bytecode.                                   |
+| 🔤 **Typegen**                   | Auto-generate a type-only `veldora-types` package from TypeScript entries.    |
 | 🧵 **Node helpers**              | Typed assets, workers, module paths, WASM, and native modules.                |
 | 🖥 **Developer-friendly runtime** | Coordinated restarts, terminal-forwarded renderer errors, and Vite shortcuts. |
 
@@ -315,6 +316,72 @@ export default defineConfig({
   }
 })
 ```
+
+### Typegen
+
+Veldora can generate a type-only package — `veldora-types` — from your TypeScript entries, so `main`, `preload`, and `renderer` can share types without a hand-maintained shared package.
+
+```ts
+import { defineConfig } from 'veldorajs'
+
+export default defineConfig({
+  veldora: {
+    main: {},
+    preload: {},
+    renderer: {},
+
+    typegen: {
+      entries: {
+        ipc: 'src/main/ipc.ts',
+        services: 'src/main/services.ts'
+      }
+    }
+  }
+})
+```
+
+Each entry key becomes a subpath of `veldora-types` (for example `ipc` → `veldora-types/ipc`).
+
+Veldora generates:
+
+```txt
+.veldora/
+├─ tsconfig.json
+└─ types/
+   ├─ index.d.ts
+   ├─ ipc.d.ts
+   └─ services.d.ts
+```
+
+Bring the generated aliases into your own tsconfig via `extends`:
+
+```jsonc
+// tsconfig.json
+{
+  "extends": "./.veldora/tsconfig.json",
+  "compilerOptions": {
+    // ...
+  }
+}
+```
+
+Veldora never edits your tsconfig. `.veldora/tsconfig.json` is regenerated automatically and only registers the `veldora-types` and `veldora-types/*` aliases.
+
+Consume the types anywhere (preload / renderer / main) with type-only imports:
+
+```ts
+import type { AppRouter } from 'veldora-types'
+import type { AppRouter } from 'veldora-types/ipc'
+```
+
+`veldora-types` is type-only — runtime imports fail the build:
+
+```ts
+// ❌ build error
+import { AppRouter } from 'veldora-types/ipc'
+```
+
+Declarations regenerate automatically in development as you edit the entries (and their dependencies). Typegen runs before main / preload / renderer in both `dev` and `build`.
 
 ## Node-side Import Helpers
 

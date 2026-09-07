@@ -29,6 +29,7 @@ import modulePathPlugin from './plugins/modulePath'
 import isolateEntriesPlugin from './plugins/isolateEntries'
 import { type ExternalOptions, externalizeDepsPlugin } from './plugins/externalizeDeps'
 import { type BytecodeOptions, bytecodePlugin } from './plugins/bytecode'
+import { typegenGuardPlugin } from './plugins/typegenGuard'
 import { deepClone } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
@@ -127,6 +128,28 @@ export interface PreloadViteConfig extends BaseViteConfig<PreloadBuildOptions> {
 
 export interface RendererViteConfig extends BaseViteConfig<RendererBuildOptions> {}
 
+export interface TypegenOptions {
+  /**
+   * TypeScript entry points whose declarations are extracted into the
+   * `veldora-types` package.
+   *
+   * Each key becomes a subpath of `veldora-types` (e.g. `ipc` resolves to
+   * `veldora-types/ipc`), and each value is a path to a source entry relative
+   * to the project root.
+   *
+   * @example
+   * ```ts
+   * typegen: {
+   *   entries: {
+   *     ipc: 'src/main/ipc.ts',
+   *     services: 'src/main/services.ts'
+   *   }
+   * }
+   * ```
+   */
+  entries: Record<string, string>
+}
+
 export interface VeldoraConfig {
   /**
    * Vite config options for electron main process
@@ -146,6 +169,14 @@ export interface VeldoraConfig {
    * @see https://vitejs.dev/config/
    */
   preload?: PreloadViteConfig
+  /**
+   * Generate the `veldora-types` declaration package from the configured
+   * TypeScript entries, so preload / renderer / main can consume shared types
+   * via type-only imports.
+   *
+   * @see https://github.com/YanChenBai/veldora
+   */
+  typegen?: TypegenOptions
 }
 
 export interface UserConfig {
@@ -239,7 +270,7 @@ export async function resolveConfig(
       const outDir = config.build?.outDir
 
       const { resolve, veldora } = loadResult.config
-      const { main, preload, renderer } = veldora || {}
+      const { main, preload, renderer, typegen } = veldora || {}
 
       const veldoraConfig: VeldoraConfig = {}
 
@@ -249,7 +280,8 @@ export async function resolveConfig(
           config,
           {
             outDir,
-            root
+            root,
+            typegen: Boolean(typegen)
           }
         ).build()
       }
@@ -260,7 +292,8 @@ export async function resolveConfig(
           config,
           {
             outDir,
-            root
+            root,
+            typegen: Boolean(typegen)
           }
         ).build()
       }
@@ -271,9 +304,14 @@ export async function resolveConfig(
           config,
           {
             outDir,
-            root
+            root,
+            typegen: Boolean(typegen)
           }
         ).build()
+      }
+
+      if (typegen) {
+        veldoraConfig.typegen = typegen
       }
 
       userConfig.veldora = veldoraConfig
@@ -305,7 +343,7 @@ export abstract class ConfigFactory<
   constructor(
     protected readonly baseConfig: T,
     protected readonly inlineConfig: InlineConfig,
-    protected readonly options: { outDir?: string; root?: string }
+    protected readonly options: { outDir?: string; root?: string; typegen?: boolean }
   ) {
     baseConfig.build ??= {}
     baseConfig.build.rolldownOptions ??= baseConfig.build.rollupOptions
@@ -360,7 +398,8 @@ export class MainConfigFactory extends ConfigFactory<MainViteConfig> {
           modulePathPlugin(this),
           importMetaPlugin(),
           esmShimPlugin(),
-          ...configDrivenPlugins
+          ...configDrivenPlugins,
+          ...(this.options.typegen ? [typegenGuardPlugin()] : [])
         ]
   }
 }
@@ -391,7 +430,8 @@ export class PreloadConfigFactory extends ConfigFactory<PreloadViteConfig> {
           importMetaPlugin(),
           esmShimPlugin(),
           ...configDrivenPlugins,
-          ...(config.build?.isolatedEntries ? [isolateEntriesPlugin(this)] : [])
+          ...(config.build?.isolatedEntries ? [isolateEntriesPlugin(this)] : []),
+          ...(this.options.typegen ? [typegenGuardPlugin()] : [])
         ]
   }
 }
@@ -410,7 +450,8 @@ export class RendererConfigFactory extends ConfigFactory<RendererViteConfig> {
       : [
           electronRendererConfigPresetPlugin({ root: this.options.root }),
           electronRendererConfigValidatorPlugin(),
-          ...(config.build?.isolatedEntries ? [isolateEntriesPlugin(this)] : [])
+          ...(config.build?.isolatedEntries ? [isolateEntriesPlugin(this)] : []),
+          ...(this.options.typegen ? [typegenGuardPlugin()] : [])
         ]
   }
 }
