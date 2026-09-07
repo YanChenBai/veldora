@@ -260,22 +260,20 @@ export default defineConfig({
 })
 ```
 
-### Oxc plugin
+### TypeScript decorators
 
-```ts
-import { defineConfig, oxcPlugin } from 'veldorajs'
+Vite 8 uses Oxc for TypeScript transformation, so Veldora does not need a separate decorator plugin. Configure legacy TypeScript decorators in the tsconfig used by Electron main/preload code:
 
-export default defineConfig({
-  electron: {
-    main: {
-      plugins: [oxcPlugin()]
-    },
-
-    preload: {},
-    renderer: {}
+```jsonc
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
-})
+}
 ```
+
+Vite forwards these options to Oxc. `emitDecoratorMetadata` is an isolated transform and may not exactly match `tsc` when metadata depends on complex type inference.
 
 ### Renderer console forwarding
 
@@ -393,19 +391,21 @@ or move the Electron config into `vite.config.*`.
 
 ```diff
 -import { defineConfig, swcPlugin } from 'electron-vite'
-+import { defineConfig, oxcPlugin } from 'veldorajs'
++import { defineConfig } from 'veldorajs'
 
  export default defineConfig({
 -  main: { plugins: [swcPlugin()] },
 -  preload: {},
 -  renderer: {}
 +  electron: {
-+    main: { plugins: [oxcPlugin()] },
++    main: {},
 +    preload: {},
 +    renderer: {}
 +  }
  })
 ```
+
+If you used `swcPlugin` only for legacy decorators or decorator metadata, remove it. Keep `experimentalDecorators` and `emitDecoratorMetadata` in your TypeScript config; Vite 8/Oxc handles those options directly.
 
 ### 5. Update ambient types
 

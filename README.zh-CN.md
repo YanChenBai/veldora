@@ -264,22 +264,20 @@ export default defineConfig({
 })
 ```
 
-### Oxc Plugin
+### TypeScript 装饰器
 
-```ts
-import { defineConfig, oxcPlugin } from 'veldorajs'
+Vite 8 已经使用 Oxc 转换 TypeScript，因此 Veldora 不需要额外的装饰器插件。需要 legacy TypeScript decorators 时，直接在 Electron main / preload 使用的 tsconfig 中配置：
 
-export default defineConfig({
-  electron: {
-    main: {
-      plugins: [oxcPlugin()]
-    },
-
-    preload: {},
-    renderer: {}
+```jsonc
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
-})
+}
 ```
+
+Vite 会把这些选项交给 Oxc。`emitDecoratorMetadata` 属于 isolated transform；当 metadata 依赖复杂类型推断时，结果可能无法与 `tsc` 完全一致。
 
 ### Renderer Console 转发
 
@@ -399,19 +397,21 @@ veldora.config.*
 
 ```diff
 -import { defineConfig, swcPlugin } from 'electron-vite'
-+import { defineConfig, oxcPlugin } from 'veldorajs'
++import { defineConfig } from 'veldorajs'
 
  export default defineConfig({
 -  main: { plugins: [swcPlugin()] },
 -  preload: {},
 -  renderer: {}
 +  electron: {
-+    main: { plugins: [oxcPlugin()] },
++    main: {},
 +    preload: {},
 +    renderer: {}
 +  }
  })
 ```
+
+如果原来使用 `swcPlugin` 只是为了 legacy decorators 或 decorator metadata，可以直接移除。继续在 TypeScript 配置中保留 `experimentalDecorators` 与 `emitDecoratorMetadata`，Vite 8/Oxc 会直接处理这些选项。
 
 ### 5. 更新 ambient types
 
