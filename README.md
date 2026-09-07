@@ -296,6 +296,26 @@ export default defineConfig({
 })
 ```
 
+### Filtering main process output
+
+The Electron main process often prints noisy, non-actionable messages to the
+terminal — for example Chromium's P2P/STUN resolution errors. During
+development you can suppress them with `electron.main.filterConsole`, which
+receives each line of stdout/stderr and hides it when the callback returns
+`true`.
+
+```ts
+import { defineConfig } from 'veldorajs'
+
+export default defineConfig({
+  electron: {
+    main: {
+      filterConsole: (line) => line.includes('Failed to resolve address')
+    }
+  }
+})
+```
+
 ## Node-side Import Helpers
 
 After enabling `veldorajs/node`, Veldora-specific imports are type-safe:

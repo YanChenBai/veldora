@@ -32,16 +32,17 @@ export async function createServer(
       }
     }
 
+    const mainViteConfig = config.config?.electron?.main
+
     const restartElectron = (): void => {
       stopElectron()
-      ps = startElectron(inlineConfig.root)
+      ps = startElectron(inlineConfig.root, mainViteConfig?.filterConsole)
     }
 
     const errorHook = (e): void => {
       logger.error(`${colors.bgRed(colors.white(' ERROR '))} ${colors.red(e.message)}`)
     }
 
-    const mainViteConfig = config.config?.electron?.main
     if (mainViteConfig && !options.rendererOnly) {
       const watchHook = (): void => {
         logger.info(colors.green(`\nelectron main process rebuilt successfully`))
@@ -109,7 +110,7 @@ export async function createServer(
       server.printUrls()
     }
 
-    ps = startElectron(inlineConfig.root)
+    ps = startElectron(inlineConfig.root, mainViteConfig?.filterConsole)
 
     logger.info(colors.green(`\nstarting electron app...\n`))
 
