@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.0.3
+
+[compare changes](https://github.com/YanChenBai/veldora/compare/v0.0.2...v0.0.3)
+
+### 🩹 Fixes
+
+- **ci:** Point release notes link to master branch ([8dac112](https://github.com/YanChenBai/veldora/commit/8dac112))
+
+### 💅 Refactors
+
+- ⚠️ Remove `oxcPlugin` wrapper and rely on Vite 8/Oxc decorator configuration ([7581951](https://github.com/YanChenBai/veldora/commit/7581951))
+
+#### ⚠️ Breaking Changes
+
+- `oxcPlugin` is no longer exported; configure decorators through TypeScript/Vite options. ([7581951](https://github.com/YanChenBai/veldora/commit/7581951))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+- ChatGPT <noreply@openai.com>
 
 ## v0.0.2
 
