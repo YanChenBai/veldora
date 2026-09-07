@@ -35,7 +35,7 @@ Veldora is a modern Electron build tool rebuilt around [Vite+](https://viteplus.
 
 It keeps the familiar development model of `electron-vite`, while moving the underlying toolchain to a newer Vite+ stack powered by Rolldown and Oxc.
 
-Electron `main`, `preload`, and `renderer` targets live under one `electron` namespace and can be configured from either:
+Electron `main`, `preload`, and `renderer` targets live under one `veldora` namespace and can be configured from either:
 
 - `veldora.config.*`
 - `vite.config.*`
@@ -121,7 +121,7 @@ Or use a declaration file:
 
 It provides ambient types for:
 
-- `electron` on Vite `UserConfig`
+- `veldora` on Vite `UserConfig`
 - `process.env.ELECTRON_RENDERER_URL`
 - `?nodeWorker`
 - `?modulePath`
@@ -144,7 +144,7 @@ export default defineConfig({
     tsconfigPaths: true
   },
 
-  electron: {
+  veldora: {
     main: {},
     preload: {},
     renderer: {}
@@ -162,7 +162,7 @@ export default defineConfig({
     tsconfigPaths: true
   },
 
-  electron: {
+  veldora: {
     main: {},
     preload: {},
     renderer: {}
@@ -205,7 +205,7 @@ export default defineConfig({
     }
   },
 
-  electron: {
+  veldora: {
     main: {},
     preload: {},
     renderer: {}
@@ -221,7 +221,7 @@ export default defineConfig({
     tsconfigPaths: true
   },
 
-  electron: {
+  veldora: {
     main: {
       resolve: {
         alias: {
@@ -242,7 +242,7 @@ export default defineConfig({
 import { defineConfig } from 'veldorajs'
 
 export default defineConfig({
-  electron: {
+  veldora: {
     main: {
       build: {
         bytecode: true
@@ -283,7 +283,7 @@ Renderer errors and `console.warn` / `console.error` are forwarded to the termin
 import { defineConfig } from 'veldorajs'
 
 export default defineConfig({
-  electron: {
+  veldora: {
     renderer: {
       server: {
         forwardConsole: {
@@ -300,7 +300,7 @@ export default defineConfig({
 
 The Electron main process often prints noisy, non-actionable messages to the
 terminal — for example Chromium's P2P/STUN resolution errors. During
-development you can suppress them with `electron.main.filterConsole`, which
+development you can suppress them with `veldora.main.filterConsole`, which
 receives each line of stdout/stderr and hides it when the callback returns
 `true`.
 
@@ -308,7 +308,7 @@ receives each line of stdout/stderr and hides it when the callback returns
 import { defineConfig } from 'veldorajs'
 
 export default defineConfig({
-  electron: {
+  veldora: {
     main: {
       filterConsole: (line) => line.includes('Failed to resolve address')
     }
@@ -407,7 +407,7 @@ veldora.config.*
 
 or move the Electron config into `vite.config.*`.
 
-### 4. Group targets under `electron`
+### 4. Group targets under `veldora`
 
 ```diff
 -import { defineConfig, swcPlugin } from 'electron-vite'
@@ -417,7 +417,7 @@ or move the Electron config into `vite.config.*`.
 -  main: { plugins: [swcPlugin()] },
 -  preload: {},
 -  renderer: {}
-+  electron: {
++  veldora: {
 +    main: {},
 +    preload: {},
 +    renderer: {}
