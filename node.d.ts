@@ -1,6 +1,6 @@
 import 'vite'
 import 'vite-plus'
-import type { ElectronConfig } from './dist/index.mjs'
+import type { VeldoraConfig } from './dist/index.mjs'
 
 // node worker
 declare module '*?nodeWorker' {
@@ -48,7 +48,7 @@ declare module 'vite' {
     /**
      * Vite config options for the electron main, preload and renderer processes.
      */
-    electron?: ElectronConfig
+    veldora?: VeldoraConfig
   }
 }
 
@@ -57,7 +57,7 @@ declare module 'vite-plus' {
     /**
      * Vite config options for the electron main, preload and renderer processes.
      */
-    electron?: ElectronConfig
+    veldora?: VeldoraConfig
   }
 }
 

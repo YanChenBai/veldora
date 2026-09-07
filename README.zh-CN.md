@@ -35,7 +35,7 @@ Veldora 是一个围绕 [Vite+](https://viteplus.dev) 重构的现代 Electron �
 
 它保留了 `electron-vite` 熟悉的开发模式，同时把底层工具链迁移到由 Rolldown 和 Oxc 驱动的新一代 Vite+ 生态。
 
-Electron 的 `main`、`preload`、`renderer` 三个目标统一放在 `electron` 配置命名空间下，并且可以从下面两种配置文件中读取：
+Electron 的 `main`、`preload`、`renderer` 三个目标统一放在 `veldora` 配置命名空间下，并且可以从下面两种配置文件中读取：
 
 - `veldora.config.*`
 - `vite.config.*`
@@ -47,7 +47,7 @@ Electron 的 `main`、`preload`、`renderer` 三个目标统一放在 `electron`
 |                           |                                                                   |
 | ------------------------- | ----------------------------------------------------------------- |
 | ⚡ **原生面向 Vite+**     | 基于 Rolldown + Oxc 的构建流程。                                  |
-| 🧩 **统一 Electron 配置** | `main`、`preload`、`renderer` 放在同一个 `electron` 命名空间。    |
+| 🧩 **统一 Electron 配置** | `main`、`preload`、`renderer` 放在同一个 `veldora` 命名空间。     |
 | 🧭 **共享解析配置**       | alias 与 `resolve.tsconfigPaths` 可以跨 Electron 目标复用。       |
 | 🔒 **V8 Bytecode**        | main / preload 输出可编译为 V8 字节码。                           |
 | 🧵 **Node 侧辅助能力**    | 内置 assets、workers、module path、WASM、native module 类型支持。 |
@@ -125,7 +125,7 @@ import 'veldorajs/node'
 
 它提供的 ambient types 包括：
 
-- Vite `UserConfig` 上的 `electron`
+- Vite `UserConfig` 上的 `veldora`
 - `process.env.ELECTRON_RENDERER_URL`
 - `?nodeWorker`
 - `?modulePath`
@@ -148,7 +148,7 @@ export default defineConfig({
     tsconfigPaths: true
   },
 
-  electron: {
+  veldora: {
     main: {},
     preload: {},
     renderer: {}
@@ -166,7 +166,7 @@ export default defineConfig({
     tsconfigPaths: true
   },
 
-  electron: {
+  veldora: {
     main: {},
     preload: {},
     renderer: {}
@@ -209,7 +209,7 @@ export default defineConfig({
     }
   },
 
-  electron: {
+  veldora: {
     main: {},
     preload: {},
     renderer: {}
@@ -225,7 +225,7 @@ export default defineConfig({
     tsconfigPaths: true
   },
 
-  electron: {
+  veldora: {
     main: {
       resolve: {
         alias: {
@@ -246,7 +246,7 @@ export default defineConfig({
 import { defineConfig } from 'veldorajs'
 
 export default defineConfig({
-  electron: {
+  veldora: {
     main: {
       build: {
         bytecode: true
@@ -287,7 +287,7 @@ Renderer 中的错误以及 `console.warn` / `console.error` 默认会转发到�
 import { defineConfig } from 'veldorajs'
 
 export default defineConfig({
-  electron: {
+  veldora: {
     renderer: {
       server: {
         forwardConsole: {
@@ -393,7 +393,7 @@ veldora.config.*
 
 或者直接把 Electron 配置迁移进 `vite.config.*`。
 
-### 4. 把 targets 放入 `electron`
+### 4. 把 targets 放入 `veldora`
 
 ```diff
 -import { defineConfig, swcPlugin } from 'electron-vite'
@@ -403,7 +403,7 @@ veldora.config.*
 -  main: { plugins: [swcPlugin()] },
 -  preload: {},
 -  renderer: {}
-+  electron: {
++  veldora: {
 +    main: {},
 +    preload: {},
 +    renderer: {}
