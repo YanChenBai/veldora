@@ -361,11 +361,12 @@ Veldora 会生成：
   "extends": "./.veldora/tsconfig.json",
   "compilerOptions": {
     // ...
-  }
+  },
+  "include": ["src"]
 }
 ```
 
-Veldora 不会修改你的 tsconfig —— `.veldora/tsconfig.json` 会自动重新生成，并且只注册 `veldora-types` 与 `veldora-types/*` 别名。
+Veldora 不会修改你的 tsconfig —— `.veldora/tsconfig.json` 会自动重新生成，注册 `veldora-types` 与 `veldora-types/*` 别名，并包含生成的声明文件。
 
 之后可以在任何地方（preload / renderer / main）用仅类型导入消费这些类型：
 

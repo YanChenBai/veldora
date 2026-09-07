@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import type { DtsOptions, UserConfig } from 'vite-plus/pack'
 
 export interface TypegenPackOptions {
@@ -12,6 +14,16 @@ export interface TypegenWatcher {
 }
 
 function resolvePackConfig(options: TypegenPackOptions): UserConfig {
+  // `emitDtsOnly` is always enforced: `veldora-types` is a type-only
+  // package and must never emit runtime chunks into `.veldora/types`.
+  const dts: DtsOptions = { ...options.dts, emitDtsOnly: true }
+
+  // `tsc -b` is required to resolve `references` in the project tsconfig;
+  // enable it automatically unless the user overrides it explicitly.
+  if (dts.build === undefined && hasProjectReferences(options.root)) {
+    dts.build = true
+  }
+
   return {
     entry: options.entries,
     outDir: options.outDir,
@@ -19,14 +31,21 @@ function resolvePackConfig(options: TypegenPackOptions): UserConfig {
     platform: 'neutral',
     fixedExtension: false,
     clean: true,
-    // `emitDtsOnly` is always enforced: `veldora-types` is a type-only
-    // package and must never emit runtime chunks into `.veldora/types`.
-    dts: { ...options.dts, emitDtsOnly: true },
+    dts,
     // Force a stable `.d.ts` extension regardless of the project's
     // `package.json` `type` field.
     outExtensions: () => ({ dts: '.d.ts' }),
     cwd: options.root,
     logLevel: 'warn'
+  }
+}
+
+function hasProjectReferences(root: string): boolean {
+  try {
+    const tsconfig = JSON.parse(fs.readFileSync(path.resolve(root, 'tsconfig.json'), 'utf8'))
+    return Array.isArray(tsconfig.references) && tsconfig.references.length > 0
+  } catch {
+    return false
   }
 }
 

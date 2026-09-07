@@ -1,6 +1,7 @@
-import { build as viteBuild } from 'vite'
+import colors from 'picocolors'
+import { build as viteBuild, createLogger } from 'vite'
 import { type InlineConfig, resolveConfig } from './config'
-import { generateTypes } from './typegen'
+import { runTypegenOnce } from './typegen/runner'
 
 /**
  * Bundles the electron app for production.
@@ -14,9 +15,23 @@ export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
     return
   }
 
+  const logger = createLogger(inlineConfig.logLevel)
+
   const typegenOptions = config.config.veldora?.typegen
   if (typegenOptions) {
-    await generateTypes(typegenOptions, root)
+    const count = Object.keys(typegenOptions.entries).length
+    const startedAt = Date.now()
+
+    logger.info(colors.cyan(`\nveldora typegen: generating ${count} entries...`))
+
+    try {
+      await runTypegenOnce({ root, typegen: typegenOptions })
+      logger.info(
+        colors.green(`\nveldora typegen: generated ${count} entries in ${Date.now() - startedAt}ms`)
+      )
+    } catch (error) {
+      logger.error(colors.red(`\nveldora typegen failed:\n${(error as Error).message}`))
+    }
   }
 
   // Build targets in order: main -> preload -> renderer

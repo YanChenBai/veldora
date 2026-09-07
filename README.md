@@ -361,11 +361,12 @@ Bring the generated aliases into your own tsconfig via `extends`:
   "extends": "./.veldora/tsconfig.json",
   "compilerOptions": {
     // ...
-  }
+  },
+  "include": ["src"]
 }
 ```
 
-Veldora never edits your tsconfig. `.veldora/tsconfig.json` is regenerated automatically and only registers the `veldora-types` and `veldora-types/*` aliases.
+Veldora never edits your tsconfig. `.veldora/tsconfig.json` is regenerated automatically, registers the `veldora-types` and `veldora-types/*` aliases, and includes the generated declarations.
 
 Consume the types anywhere (preload / renderer / main) with type-only imports:
 

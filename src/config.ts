@@ -154,13 +154,15 @@ export interface TypegenOptions {
    * used to generate `veldora-types`. Overrides the defaults Veldora applies.
    *
    * `emitDtsOnly` is always enabled and cannot be overridden, since
-   * `veldora-types` is a type-only package.
+   * `veldora-types` is a type-only package. `build` (tsc build mode) is
+   * enabled automatically when the project tsconfig uses `references`, and can
+   * be overridden explicitly.
    *
    * @example
    * ```ts
    * typegen: {
    *   entries: { ipc: 'src/main/ipc.ts' },
-   *   // Required when the project tsconfig uses `references`.
+   *   // Explicitly force tsc build mode:
    *   dts: { build: true }
    * }
    * ```

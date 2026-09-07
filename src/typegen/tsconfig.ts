@@ -5,9 +5,10 @@ import { TYPEGEN_DIR, TYPEGEN_PACKAGE, TYPEGEN_TSCONFIG_FILE, VELDORA_DIR } from
 /**
  * Write the `.veldora/tsconfig.json` Veldora-generated TypeScript environment.
  *
- * It only registers the `veldora-types` and `veldora-types/*` path aliases so
- * that user projects can opt in via `extends` (or `references`) from their own
- * tsconfig. Veldora never touches the user's tsconfig.
+ * It registers the `veldora-types` and `veldora-types/*` path aliases and
+ * includes the generated declarations, so user projects can opt in via
+ * `extends` (or `references`) from their own tsconfig. Veldora never touches
+ * the user's tsconfig.
  *
  * The write is idempotent: identical content is not rewritten, so tsserver /
  * Volar are not needlessly invalidated.
@@ -19,7 +20,8 @@ export function writeTypegenTsconfig(root: string): void {
         [TYPEGEN_PACKAGE]: [`./${TYPEGEN_DIR}/index.d.ts`],
         [`${TYPEGEN_PACKAGE}/*`]: [`./${TYPEGEN_DIR}/*.d.ts`]
       }
-    }
+    },
+    include: [`./${TYPEGEN_DIR}/**/*.d.ts`]
   }
 
   const content = `${JSON.stringify(tsconfig, null, 2)}\n`

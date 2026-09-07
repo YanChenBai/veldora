@@ -94,6 +94,7 @@ describe('writeTypegenTsconfig', () => {
       'veldora-types': ['./types/index.d.ts'],
       'veldora-types/*': ['./types/*.d.ts']
     })
+    expect(tsconfig.include).toEqual(['./types/**/*.d.ts'])
   })
 
   it('is idempotent', () => {
@@ -159,6 +160,37 @@ export interface AppRouter extends Shared {
     const dts = read(root, '.veldora/types/ipc.d.ts')
     expect(dts).toContain('AppRouter')
     expect(dts).toContain('version')
+  })
+
+  it('auto-enables tsc build mode for references projects', async () => {
+    const root = createFixture({
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: { composite: true, module: 'ESNext', moduleResolution: 'Bundler' },
+        include: ['src'],
+        references: [{ path: './packages/shared' }]
+      }),
+      'packages/shared/tsconfig.json': JSON.stringify({
+        compilerOptions: { composite: true, module: 'ESNext', moduleResolution: 'Bundler' },
+        include: ['*.ts']
+      }),
+      'packages/shared/index.ts': `export interface Shared {
+  version: string
+}
+`,
+      'src/ipc.ts': `import type { Shared } from '../packages/shared'
+
+export interface AppRouter extends Shared {
+  user: {
+    get(id: string): Promise<{ id: string }>
+  }
+}
+`
+    })
+
+    await generateTypes({ entries: { ipc: 'src/ipc.ts' } }, root)
+
+    expect(exists(root, '.veldora/types/ipc.d.ts')).toBe(true)
+    expect(read(root, '.veldora/types/ipc.d.ts')).toContain('version')
   })
 
   it('resolves veldora-types imports when the user extends the generated tsconfig', async () => {

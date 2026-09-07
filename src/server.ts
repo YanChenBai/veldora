@@ -11,7 +11,7 @@ import colors from 'picocolors'
 import { type InlineConfig, resolveConfig } from './config'
 import { resolveHostname } from './utils'
 import { startElectron } from './electron'
-import { generateTypes, watchTypes, type TypegenController } from './typegen'
+import { startTypegen, type TypegenRunner } from './typegen/runner'
 
 export async function createServer(
   inlineConfig: InlineConfig = {},
@@ -25,18 +25,30 @@ export async function createServer(
 
     let server: ViteDevServer | undefined
     let ps: ChildProcess | undefined
-    let typegen: TypegenController | undefined
+    let typegen: TypegenRunner | undefined
 
     const typegenOptions = config.config?.veldora?.typegen
     if (typegenOptions) {
-      await generateTypes(typegenOptions, root)
-      typegen = await watchTypes(typegenOptions, root)
+      const count = Object.keys(typegenOptions.entries).length
+      const startedAt = Date.now()
 
-      logger.info(
-        colors.green(
-          `\nveldora typegen generated ${Object.keys(typegenOptions.entries).length} entries`
-        )
-      )
+      logger.info(colors.cyan(`\nveldora typegen: generating ${count} entries...`))
+
+      typegen = startTypegen({
+        root,
+        typegen: typegenOptions,
+        watch: true,
+        onGenerated: () => {
+          logger.info(
+            colors.green(
+              `\nveldora typegen: generated ${count} entries in ${Date.now() - startedAt}ms`
+            )
+          )
+        },
+        onError: (error) => {
+          logger.error(colors.red(`\nveldora typegen failed:\n${error.message}`))
+        }
+      })
     }
 
     const stopElectron = (): void => {

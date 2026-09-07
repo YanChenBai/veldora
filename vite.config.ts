@@ -2,7 +2,7 @@ import { defineConfig } from 'vite-plus'
 
 export default defineConfig({
   pack: {
-    entry: ['src/index.ts', 'src/cli.ts'],
+    entry: ['src/index.ts', 'src/cli.ts', { 'typegen-worker': 'src/typegen/worker.ts' }],
     format: 'esm',
     dts: true,
     outDir: 'dist'
