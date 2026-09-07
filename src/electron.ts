@@ -174,10 +174,14 @@ export function startElectron(
     stdio: ['ignore', filterConsole ? 'pipe' : 'inherit', filterConsole ? 'pipe' : 'inherit']
   })
   if (filterConsole && ps.stdout && ps.stderr) {
-    pipeFilteredOutput(ps.stdout, process.stdout, filterConsole)
-    pipeFilteredOutput(ps.stderr, process.stderr, filterConsole)
+    const stdoutDrained = pipeFilteredOutput(ps.stdout, process.stdout, filterConsole)
+    const stderrDrained = pipeFilteredOutput(ps.stderr, process.stderr, filterConsole)
+    ps.on('close', (code) => {
+      Promise.all([stdoutDrained, stderrDrained]).then(() => process.exit(code ?? 0))
+    })
+  } else {
+    ps.on('close', process.exit)
   }
-  ps.on('close', process.exit)
 
   return ps
 }
@@ -185,17 +189,47 @@ export function startElectron(
 /**
  * Filter a child process output stream line by line, forwarding only the
  * lines for which `filter` returns `false`.
+ *
+ * @returns a promise that resolves once the source has ended and every
+ * forwarded chunk has been flushed to the destination.
  */
-function pipeFilteredOutput(source: Readable, dest: Writable, filter: ConsoleFilter): void {
-  let buffer = ''
-  source.setEncoding('utf8')
-  source.on('data', (chunk: string) => {
-    const result = filterConsoleOutput(chunk, buffer, filter)
-    buffer = result.buffer
-    if (result.output) dest.write(result.output)
-  })
-  source.on('end', () => {
-    if (buffer && !filter(buffer)) dest.write(buffer)
+export function pipeFilteredOutput(
+  source: Readable,
+  dest: Writable,
+  filter: ConsoleFilter
+): Promise<void> {
+  return new Promise((resolve) => {
+    let buffer = ''
+    let pending = 0
+    let ended = false
+
+    const flush = (output: string): void => {
+      pending++
+      dest.write(output, () => {
+        pending--
+        maybeDone()
+      })
+    }
+
+    const maybeDone = (): void => {
+      if (ended && pending === 0) resolve()
+    }
+
+    source.setEncoding('utf8')
+    source.on('data', (chunk: string) => {
+      const result = filterConsoleOutput(chunk, buffer, filter)
+      buffer = result.buffer
+      if (result.output) flush(result.output)
+    })
+    source.on('end', () => {
+      if (buffer && !filter(buffer)) flush(buffer)
+      ended = true
+      maybeDone()
+    })
+    source.on('error', () => {
+      ended = true
+      maybeDone()
+    })
   })
 }
 
