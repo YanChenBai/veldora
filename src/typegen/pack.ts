@@ -18,7 +18,6 @@ function resolvePackConfig(options: TypegenPackOptions): UserConfig {
     platform: 'neutral',
     fixedExtension: false,
     clean: true,
-    tsconfig: false,
     dts: { emitDtsOnly: true },
     // Force a stable `.d.ts` extension regardless of the project's
     // `package.json` `type` field.

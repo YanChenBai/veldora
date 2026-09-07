@@ -421,7 +421,8 @@ export class PreloadConfigFactory extends ConfigFactory<PreloadViteConfig> {
           assetPlugin(),
           importMetaPlugin(),
           esmShimPlugin(),
-          ...configDrivenPlugins
+          ...configDrivenPlugins,
+          ...(this.options.typegen ? [typegenGuardPlugin()] : [])
         ]
       : [
           electronPreloadConfigPresetPlugin({ root: this.options.root }),
@@ -446,7 +447,10 @@ export class RendererConfigFactory extends ConfigFactory<RendererViteConfig> {
     cleanMode?: boolean
   ): Promise<PluginOption[]> {
     return cleanMode
-      ? [electronRendererConfigPresetPlugin({ root: this.options.root })]
+      ? [
+          electronRendererConfigPresetPlugin({ root: this.options.root }),
+          ...(this.options.typegen ? [typegenGuardPlugin()] : [])
+        ]
       : [
           electronRendererConfigPresetPlugin({ root: this.options.root }),
           electronRendererConfigValidatorPlugin(),

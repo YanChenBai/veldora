@@ -371,6 +371,11 @@ Consume the types anywhere (preload / renderer / main) with type-only imports:
 
 ```ts
 import type { AppRouter } from 'veldora-types'
+```
+
+or via a specific entry subpath:
+
+```ts
 import type { AppRouter } from 'veldora-types/ipc'
 ```
 

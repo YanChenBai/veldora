@@ -128,6 +128,39 @@ describe('generateTypes', () => {
     expect(index).toContain(`export type * from './services'`)
   })
 
+  it('honors tsconfig path aliases when emitting declarations', async () => {
+    const root = createFixture({
+      'tsconfig.json': JSON.stringify({
+        compilerOptions: {
+          baseUrl: '.',
+          paths: { '@/*': ['src/*'] },
+          module: 'ESNext',
+          moduleResolution: 'Bundler',
+          strict: true
+        },
+        include: ['src']
+      }),
+      'src/shared.ts': `export interface Shared {
+  version: string
+}
+`,
+      'src/ipc.ts': `import type { Shared } from '@/shared'
+
+export interface AppRouter extends Shared {
+  user: {
+    get(id: string): Promise<{ id: string }>
+  }
+}
+`
+    })
+
+    await generateTypes({ entries: { ipc: 'src/ipc.ts' } }, root)
+
+    const dts = read(root, '.veldora/types/ipc.d.ts')
+    expect(dts).toContain('AppRouter')
+    expect(dts).toContain('version')
+  })
+
   it('resolves veldora-types imports when the user extends the generated tsconfig', async () => {
     const root = createFixture(SRC)
     await generateTypes({ entries: { ipc: 'src/ipc.ts' } }, root)

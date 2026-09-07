@@ -371,6 +371,11 @@ Veldora 不会修改你的 tsconfig —— `.veldora/tsconfig.json` 会自动重
 
 ```ts
 import type { AppRouter } from 'veldora-types'
+```
+
+或者通过具体的 entry 子路径：
+
+```ts
 import type { AppRouter } from 'veldora-types/ipc'
 ```
 
