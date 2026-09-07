@@ -16,7 +16,7 @@ export async function build(inlineConfig: InlineConfig = {}): Promise<void> {
   const buildTargets = ['main', 'preload', 'renderer'] as const
 
   for (const target of buildTargets) {
-    const viteConfig = config.config.electron?.[target]
+    const viteConfig = config.config.veldora?.[target]
     if (viteConfig) {
       // Disable watch mode in production builds
       if (viteConfig.build?.watch) {
