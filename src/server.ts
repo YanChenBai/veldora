@@ -32,7 +32,7 @@ export async function createServer(
       }
     }
 
-    const mainViteConfig = config.config?.electron?.main
+    const mainViteConfig = config.config?.veldora?.main
 
     const restartElectron = (): void => {
       stopElectron()
@@ -59,7 +59,7 @@ export async function createServer(
       logger.info(colors.green(`\nelectron main process built successfully`))
     }
 
-    const preloadViteConfig = config.config?.electron?.preload
+    const preloadViteConfig = config.config?.veldora?.preload
     if (preloadViteConfig && !options.rendererOnly) {
       logger.info(colors.gray(`\n-----\n`))
 
@@ -84,7 +84,7 @@ export async function createServer(
       )
     }
 
-    const rendererViteConfig = config.config?.electron?.renderer
+    const rendererViteConfig = config.config?.veldora?.renderer
     if (rendererViteConfig) {
       logger.info(colors.gray(`\n-----\n`))
 

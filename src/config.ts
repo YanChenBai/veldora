@@ -113,7 +113,7 @@ export interface MainViteConfig extends BaseViteConfig<MainBuildOptions> {
    *
    * @example
    * ```ts
-   * electron: {
+   * veldora: {
    *   main: {
    *     filterConsole: (line) => line.includes('Failed to resolve address')
    *   }
@@ -127,7 +127,7 @@ export interface PreloadViteConfig extends BaseViteConfig<PreloadBuildOptions> {
 
 export interface RendererViteConfig extends BaseViteConfig<RendererBuildOptions> {}
 
-export interface ElectronConfig {
+export interface VeldoraConfig {
   /**
    * Vite config options for electron main process
    *
@@ -159,7 +159,7 @@ export interface UserConfig {
   /**
    * Vite config options for the electron main, preload and renderer processes.
    */
-  electron?: ElectronConfig
+  veldora?: VeldoraConfig
 }
 
 export type ElectronViteConfigFnObject = (env: ConfigEnv) => UserConfig
@@ -238,13 +238,13 @@ export async function resolveConfig(
 
       const outDir = config.build?.outDir
 
-      const { resolve, electron } = loadResult.config
-      const { main, preload, renderer } = electron || {}
+      const { resolve, veldora } = loadResult.config
+      const { main, preload, renderer } = veldora || {}
 
-      const electronConfig: ElectronConfig = {}
+      const veldoraConfig: VeldoraConfig = {}
 
       if (main) {
-        electronConfig.main = await new MainConfigFactory(
+        veldoraConfig.main = await new MainConfigFactory(
           mergeSharedResolve(resolve, main),
           config,
           {
@@ -255,7 +255,7 @@ export async function resolveConfig(
       }
 
       if (preload) {
-        electronConfig.preload = await new PreloadConfigFactory(
+        veldoraConfig.preload = await new PreloadConfigFactory(
           mergeSharedResolve(resolve, preload),
           config,
           {
@@ -266,7 +266,7 @@ export async function resolveConfig(
       }
 
       if (renderer) {
-        electronConfig.renderer = await new RendererConfigFactory(
+        veldoraConfig.renderer = await new RendererConfigFactory(
           mergeSharedResolve(resolve, renderer),
           config,
           {
@@ -276,7 +276,7 @@ export async function resolveConfig(
         ).build()
       }
 
-      userConfig.electron = electronConfig
+      userConfig.veldora = veldoraConfig
 
       configFile = loadResult.path
       configFileDependencies = loadResult.dependencies
@@ -482,7 +482,7 @@ export async function loadConfigFromFile(
   if (!resolvedPath) {
     return {
       path: '',
-      config: { electron: { main: {}, preload: {}, renderer: {} } },
+      config: { veldora: { main: {}, preload: {}, renderer: {} } },
       dependencies: []
     }
   }
@@ -493,7 +493,7 @@ export async function loadConfigFromFile(
 
     if (!ignoreConfigWarning) {
       const missingFields = ['main', 'renderer', 'preload'].filter(
-        (field) => !config.electron?.[field]
+        (field) => !config.veldora?.[field]
       )
       if (missingFields.length > 0) {
         createLogger(logLevel).warn(
