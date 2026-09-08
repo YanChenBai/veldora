@@ -24,7 +24,7 @@ import {
 import assetPlugin from './plugins/asset'
 import workerPlugin from './plugins/worker'
 import importMetaPlugin from './plugins/importMeta'
-import injectPlugin from './plugins/inject'
+import injectScriptPlugin from './plugins/injectScript'
 import esmShimPlugin from './plugins/esmShim'
 import modulePathPlugin from './plugins/modulePath'
 import isolateEntriesPlugin from './plugins/isolateEntries'
@@ -351,7 +351,7 @@ export class MainConfigFactory extends ConfigFactory<MainViteConfig> {
           assetPlugin(),
           importMetaPlugin(),
           esmShimPlugin(),
-          injectPlugin(),
+          injectScriptPlugin(),
           ...configDrivenPlugins
         ]
       : [
@@ -362,7 +362,7 @@ export class MainConfigFactory extends ConfigFactory<MainViteConfig> {
           modulePathPlugin(this),
           importMetaPlugin(),
           esmShimPlugin(),
-          injectPlugin(),
+          injectScriptPlugin(),
           ...configDrivenPlugins
         ]
   }

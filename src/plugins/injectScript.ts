@@ -5,11 +5,11 @@ const injectRE = /(?:\?|&)inject(?:&|$)/
 const defaultExportRE = /\bexport\s+default\b/
 const moduleSyntaxRE = /^\s*(?:import\s+(?!\()|export\s+)/m
 
-const ENTRY_NAME = '__veldora_inject_entry__'
+const ENTRY_NAME = '__veldora_inject_script_entry__'
 
-export default function injectPlugin(): Plugin {
+export default function injectScriptPlugin(): Plugin {
   return {
-    name: 'vite:inject',
+    name: 'vite:inject-script',
     apply: 'build',
     enforce: 'pre',
 
@@ -19,7 +19,7 @@ export default function injectPlugin(): Plugin {
       }
 
       const filename = cleanUrl(id)
-      
+
       const transformed = await transformWithOxc(source, filename, {
         target: 'esnext',
         sourcemap: false
