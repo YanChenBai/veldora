@@ -1,5 +1,34 @@
 # Changelog
 
+## v0.0.4
+
+[compare changes](https://github.com/YanChenBai/veldora/compare/v0.0.3...v0.0.4)
+
+### 🚀 Enhancements
+
+- **electron:** Add main process console filtering ([cd6b4e8](https://github.com/YanChenBai/veldora/commit/cd6b4e8))
+
+### 🩹 Fixes
+
+- **electron:** Drain filtered output before exit ([f38bf4b](https://github.com/YanChenBai/veldora/commit/f38bf4b))
+- **ci:** Use pnpm packing for preview packages ([1176cfd](https://github.com/YanChenBai/veldora/commit/1176cfd))
+
+### 💅 Refactors
+
+- ⚠️  Rename electron config namespace to veldora ([076f6d0](https://github.com/YanChenBai/veldora/commit/076f6d0))
+
+### 🤖 CI
+
+- Add pkg.pr.new preview publishing ([e6e32de](https://github.com/YanChenBai/veldora/commit/e6e32de))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Rename electron config namespace to veldora ([076f6d0](https://github.com/YanChenBai/veldora/commit/076f6d0))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.3
 
 [compare changes](https://github.com/YanChenBai/veldora/compare/v0.0.2...v0.0.3)
