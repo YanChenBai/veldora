@@ -44,14 +44,14 @@ When both are present, `veldora.config.*` takes precedence.
 
 ## Highlights
 
-|                                  |                                                                                       |
-| -------------------------------- | ------------------------------------------------------------------------------------- |
-| ⚡ **Vite+ native**              | Rolldown + Oxc based workflow.                                                        |
-| 🧩 **Unified Electron config**   | Configure `main`, `preload`, and `renderer` together.                                 |
-| 🧭 **Shared resolution**         | Reuse aliases and `resolve.tsconfigPaths` across Electron targets.                    |
-| 🔒 **V8 bytecode**               | Compile main/preload output to V8 bytecode.                                           |
-| 🧵 **Node helpers**              | Inject scripts, typed assets, workers, module paths, WASM, and native modules.        |
-| 🖥 **Developer-friendly runtime** | Coordinated restarts, terminal-forwarded renderer errors, and Vite shortcuts.         |
+|                                  |                                                                                |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| ⚡ **Vite+ native**              | Rolldown + Oxc based workflow.                                                 |
+| 🧩 **Unified Electron config**   | Configure `main`, `preload`, and `renderer` together.                          |
+| 🧭 **Shared resolution**         | Reuse aliases and `resolve.tsconfigPaths` across Electron targets.             |
+| 🔒 **V8 bytecode**               | Compile main/preload output to V8 bytecode.                                    |
+| 🧵 **Node helpers**              | Inject scripts, typed assets, workers, module paths, WASM, and native modules. |
+| 🖥 **Developer-friendly runtime** | Coordinated restarts, terminal-forwarded renderer errors, and Vite shortcuts.  |
 
 ## Quick Start
 
@@ -110,7 +110,6 @@ For TypeScript projects, add `veldorajs/node` to the TypeScript config used by E
   "include": ["vite.config.*", "veldora.config.*", "src/main/**/*", "src/preload/**/*"]
 }
 ```
-
 
 Or use a declaration file:
 

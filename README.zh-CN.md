@@ -44,14 +44,14 @@ Electron 的 `main`、`preload`、`renderer` 三个目标统一放在 `veldora` 
 
 ## 核心特性
 
-|                           |                                                                            |
-| ------------------------- | -------------------------------------------------------------------------- |
-| ⚡ **原生面向 Vite+**     | 基于 Rolldown + Oxc 的构建流程。                                           |
-| 🧩 **统一 Electron 配置** | `main`、`preload`、`renderer` 放在同一个 `veldora` 命名空间。              |
-| 🧭 **共享解析配置**       | alias 与 `resolve.tsconfigPaths` 可以跨 Electron 目标复用。                |
-| 🔒 **V8 Bytecode**        | main / preload 输出可编译为 V8 字节码。                                    |
-| 🧵 **Node 侧辅助能力**    | 内置注入脚本、assets、workers、module path、WASM 与 native module 支持。   |
-| 🖥 **更好的开发体验**      | Electron 协同重启、Renderer 错误转发到终端、Vite 交互快捷键。              |
+|                           |                                                                          |
+| ------------------------- | ------------------------------------------------------------------------ |
+| ⚡ **原生面向 Vite+**     | 基于 Rolldown + Oxc 的构建流程。                                         |
+| 🧩 **统一 Electron 配置** | `main`、`preload`、`renderer` 放在同一个 `veldora` 命名空间。            |
+| 🧭 **共享解析配置**       | alias 与 `resolve.tsconfigPaths` 可以跨 Electron 目标复用。              |
+| 🔒 **V8 Bytecode**        | main / preload 输出可编译为 V8 字节码。                                  |
+| 🧵 **Node 侧辅助能力**    | 内置注入脚本、assets、workers、module path、WASM 与 native module 支持。 |
+| 🖥 **更好的开发体验**      | Electron 协同重启、Renderer 错误转发到终端、Vite 交互快捷键。            |
 
 ## 快速开始
 
@@ -110,7 +110,6 @@ pnpm add -D veldorajs electron
   "include": ["vite.config.*", "veldora.config.*", "src/main/**/*", "src/preload/**/*"]
 }
 ```
-
 
 也可以通过声明文件引入：
 
