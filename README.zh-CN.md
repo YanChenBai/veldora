@@ -347,7 +347,7 @@ export default async () => {
 }
 ```
 
-Veldora 会使用 Oxc 转换模块，并生成面向当前 JavaScript 运行环境的可执行脚本。
+Veldora 会使用 Oxc 转换模块，并生成面向 Electron 内置 Chromium 版本的可执行脚本；当无法探测到 Electron 版本时回退到 ESNext。
 
 ## Node 侧 Import Helpers
 

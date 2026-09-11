@@ -363,7 +363,7 @@ export default async () => {
 }
 ```
 
-Veldora transforms the module with Oxc and emits an executable script targeting the current JavaScript runtime.
+Veldora transforms the module with Oxc and emits an executable script targeting the Chromium version bundled with the detected Electron release, falling back to ESNext when that version cannot be detected.
 
 ## Node-side Import Helpers
 
