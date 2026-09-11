@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "antfu": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "skillPath": "skills/antfu/SKILL.md",
+      "computedHash": "79a663bcf1f0580143905b81dc86bc86a21a6e759bdfa674f70a3d0a94e06ba3"
+    },
+    "pnpm": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pnpm/SKILL.md",
+      "computedHash": "20bca721bb934e39c8ff2dc3df2cd1712f9efb5419afe2cb847267f6fe0eacbc"
+    },
+    "vite": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vite/SKILL.md",
+      "computedHash": "1cdc4bbecaa89544e6ef92566b015db989994bf90c4472683ac64f7a114dc3af"
+    }
+  }
+}
