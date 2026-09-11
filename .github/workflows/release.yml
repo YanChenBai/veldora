@@ -31,6 +31,13 @@ jobs:
       - name: Test
         run: vp run test
 
+      # Backstop for the scheduled updater being disabled on an idle repo.
+      # Warns only: a stale table is safe (targets stay conservative), so it
+      # must never block a release.
+      - name: Check electron version data
+        continue-on-error: true
+        run: node scripts/updateElectronVersions.mjs --check
+
       - name: Build
         run: vp pack
 

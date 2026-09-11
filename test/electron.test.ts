@@ -1,6 +1,57 @@
 import { Readable, Writable } from 'node:stream'
-import { describe, expect, it } from 'vite-plus/test'
-import { filterConsoleOutput, pipeFilteredOutput } from '../src/electron'
+import { afterEach, describe, expect, it } from 'vite-plus/test'
+import electronVersions from '../src/electronVersions.json'
+import {
+  filterConsoleOutput,
+  getElectronChromeTarget,
+  getElectronNodeTarget,
+  pipeFilteredOutput
+} from '../src/electron'
+
+describe('electron build targets', () => {
+  const majors = Object.keys(electronVersions.versions).map(Number)
+  const newestMajor = Math.max(...majors)
+  const newestEntry = electronVersions.versions[String(newestMajor)]
+  const newestNodeTarget = `node${newestEntry.node.split('.').slice(0, 2).join('.')}`
+  const newestChromeTarget = `chrome${newestEntry.chrome.split('.')[0]}`
+  const originalMajorVer = process.env.ELECTRON_MAJOR_VER
+
+  afterEach(() => {
+    if (originalMajorVer === undefined) delete process.env.ELECTRON_MAJOR_VER
+    else process.env.ELECTRON_MAJOR_VER = originalMajorVer
+  })
+
+  it('maps a known electron major to its bundled node and chrome versions', () => {
+    const entry = electronVersions.versions[String(newestMajor)]
+    process.env.ELECTRON_MAJOR_VER = String(newestMajor)
+
+    expect(getElectronNodeTarget()).toBe(`node${entry.node.split('.').slice(0, 2).join('.')}`)
+    expect(getElectronChromeTarget()).toBe(`chrome${entry.chrome.split('.')[0]}`)
+  })
+
+  it('falls back to the newest known entry for a newer electron major', () => {
+    process.env.ELECTRON_MAJOR_VER = String(newestMajor + 5)
+
+    expect(getElectronNodeTarget()).toBe(newestNodeTarget)
+    expect(getElectronChromeTarget()).toBe(newestChromeTarget)
+  })
+
+  it('maps an end-of-life electron major to its frozen node and chrome versions', () => {
+    // Electron 22 is EOL, so the versions it bundled can never change: this
+    // pins the mapping logic independently of the data file.
+    process.env.ELECTRON_MAJOR_VER = '22'
+
+    expect(getElectronNodeTarget()).toBe('node16.17')
+    expect(getElectronChromeTarget()).toBe('chrome108')
+  })
+
+  it('returns no target for electron 10 and below', () => {
+    process.env.ELECTRON_MAJOR_VER = '10'
+
+    expect(getElectronNodeTarget()).toBe('')
+    expect(getElectronChromeTarget()).toBe('')
+  })
+})
 
 describe('filterConsoleOutput', () => {
   it('forwards lines that do not match the filter', () => {

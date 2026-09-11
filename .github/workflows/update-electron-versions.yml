@@ -1,0 +1,40 @@
+name: Update Electron Versions
+
+on:
+  schedule:
+    # Weekly, Monday 03:00 UTC. The script is a no-op when nothing changed.
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Refresh electronVersions.json
+        run: node scripts/updateElectronVersions.mjs
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/update-electron-versions
+          delete-branch: true
+          commit-message: 'chore: update electron version data'
+          title: 'chore: update electron version data'
+          body: |
+            Automated refresh of `src/electronVersions.json` from
+            https://releases.electronjs.org/releases.json.
+
+            Review the node/chromium delta, then merge. The next release will
+            ship the updated build targets.
