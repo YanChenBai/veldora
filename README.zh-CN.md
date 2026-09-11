@@ -331,7 +331,7 @@ const user = await window.webContents.executeJavaScript(getUserScript)
 
 `?inject` 仅在 Electron `main` target 中提供。
 
-Inject 模块需要保持独立，可以包含局部声明以及 TypeScript 类型，但不支持运行时 `import` 和具名 `export`：
+Inject 模块需要保持独立，可以包含局部声明以及 TypeScript 类型，但不支持运行时 `import`、`import.meta` 和具名 `export`：
 
 ```ts
 const endpoint = 'https://example.com/api/user'

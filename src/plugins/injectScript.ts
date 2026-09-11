@@ -9,6 +9,7 @@ const ENTRY_NAME = '__veldora_inject_script_entry__'
 const RUNTIME_HELPERS_PREFIX = '@oxc-project/runtime'
 
 const MODULE_SYNTAX_MESSAGE = 'cannot contain runtime imports or named exports'
+const IMPORT_META_MESSAGE = 'cannot use "import.meta", which is unavailable in a classic script'
 
 interface Node {
   type: string
@@ -39,11 +40,19 @@ interface ImportDeclarationNode extends Node {
   source: { value: string }
 }
 
-function containsDynamicImport(node: unknown): boolean {
-  let found = false
+/**
+ * Returns the error message for the first construct that cannot survive as a
+ * standalone classic script, or `null` when the module is valid.
+ *
+ * `import()` needs a bundler to resolve, and `import.meta` — a `MetaProperty` on
+ * the Oxc version in use, an `ImportMeta` node on newer ones — is a syntax error
+ * outside a module.
+ */
+function findUnsupportedSyntax(node: unknown): string | null {
+  let message: string | null = null
 
   const visit = (current: unknown): void => {
-    if (found || !current || typeof current !== 'object') {
+    if (message || !current || typeof current !== 'object') {
       return
     }
     if (Array.isArray(current)) {
@@ -55,7 +64,16 @@ function containsDynamicImport(node: unknown): boolean {
 
     const record = current as Record<string, unknown>
     if (record.type === 'ImportExpression') {
-      found = true
+      message = MODULE_SYNTAX_MESSAGE
+      return
+    }
+
+    const meta = record.meta as { name?: string } | undefined
+    if (
+      record.type === 'ImportMeta' ||
+      (record.type === 'MetaProperty' && meta?.name === 'import')
+    ) {
+      message = IMPORT_META_MESSAGE
       return
     }
 
@@ -68,7 +86,15 @@ function containsDynamicImport(node: unknown): boolean {
   }
 
   visit(node)
-  return found
+  return message
+}
+
+/** Returns the name a default-exported declaration binds, if it has one. */
+function getDeclaredName(node: Node): string | null {
+  if (node.type !== 'FunctionDeclaration' && node.type !== 'ClassDeclaration') {
+    return null
+  }
+  return (node as { id?: { name: string } | null }).id?.name ?? null
 }
 
 export default function injectScriptPlugin(): Plugin {
@@ -147,21 +173,28 @@ export default function injectScriptPlugin(): Plugin {
         this.error(`[vite:inject] ${filename} must have a default export`)
       }
 
-      if (containsDynamicImport(program)) {
-        this.error(`[vite:inject] ${filename} ${MODULE_SYNTAX_MESSAGE}`)
+      const unsupported = findUnsupportedSyntax(program)
+      if (unsupported) {
+        this.error(`[vite:inject] ${filename} ${unsupported}`)
       }
 
       const s = new MagicString(transformed.code)
+      // The generated wrapper invokes this binding to run the default export.
+      let entryName = ENTRY_NAME
       if (defaultExport.kind === 'declaration') {
-        // `export default <expr>` -> `const <entry> = <expr>`
-        // A named function/class declaration becomes an expression, so it loses its
-        // outer binding; that only matters if later code references it, which the
-        // standalone-module contract does not allow anyway.
-        s.overwrite(
-          defaultExport.node.start,
-          defaultExport.node.declaration.start,
-          `const ${ENTRY_NAME} = `
-        )
+        const { declaration } = defaultExport.node
+        const declaredName = getDeclaredName(declaration)
+        if (declaredName) {
+          // `export default function fn() {}` -> `function fn() {}`
+          // Keeping the declaration instead of turning it into an expression leaves
+          // `fn` bound in module scope, so hoisted and later references still resolve.
+          s.remove(defaultExport.node.start, declaration.start)
+          entryName = declaredName
+        } else {
+          // `export default <expr>`, including anonymous function and class
+          // declarations -> `const <entry> = <expr>`
+          s.overwrite(defaultExport.node.start, declaration.start, `const ${ENTRY_NAME} = `)
+        }
       } else {
         // `export { fn as default }` -> `const <entry> = fn`
         s.overwrite(
@@ -178,7 +211,7 @@ export default function injectScriptPlugin(): Plugin {
         )
       }
 
-      const script = ['(async () => {', body, `return ${ENTRY_NAME}()`, '})()'].join('\n')
+      const script = ['(async () => {', body, `return ${entryName}()`, '})()'].join('\n')
 
       return {
         code: `export default ${JSON.stringify(script)}`,

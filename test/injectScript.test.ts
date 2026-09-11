@@ -118,6 +118,38 @@ describe('injectScriptPlugin', () => {
     expect(message).toContain('runtime helper')
   })
 
+  it('rejects import.meta, which a classic script cannot parse', async () => {
+    const message = await compileError(`export default () => import.meta.url`)
+    expect(message).toContain('import.meta')
+  })
+
+  it('rejects import.meta nested inside a local declaration', async () => {
+    const source = `function get() { return import.meta.url }\nexport default () => get()`
+    const message = await compileError(source)
+    expect(message).toContain('import.meta')
+  })
+
+  it('keeps the binding of a named default function declaration', async () => {
+    const source = `const label = main()\nexport default function main() { return 'main' }`
+    expect(await run(source)).toBe('main')
+  })
+
+  it('keeps a named default function declaration reachable after the export', async () => {
+    const source = [
+      'export default function main() { return typeof alias }',
+      `const alias = main`
+    ].join('\n')
+    expect(await run(source)).toBe('function')
+  })
+
+  it('keeps a named default class declaration intact', async () => {
+    // The wrapper invokes the default export, so a class cannot be run; the
+    // emitted script is what shows whether its binding survived.
+    const script = await compile(`export default class Main {}\nconst alias = Main`)
+    expect(script).toContain('class Main {}')
+    expect(script).toContain('return Main()')
+  })
+
   it('transpiles the script for the Electron renderer runtime', async () => {
     const script = await compile(`export default (value) => value ?? 1`)
     expect(script).not.toContain('??')

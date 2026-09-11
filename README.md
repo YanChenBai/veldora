@@ -347,7 +347,7 @@ const user = await window.webContents.executeJavaScript(getUserScript)
 
 `?inject` is available in the Electron `main` target.
 
-Inject modules must be standalone. They may contain local declarations and TypeScript types, but runtime imports and named exports are not supported:
+Inject modules must be standalone. They may contain local declarations and TypeScript types, but runtime imports, `import.meta`, and named exports are not supported:
 
 ```ts
 const endpoint = 'https://example.com/api/user'
