@@ -45,7 +45,6 @@ In each package's `package.json`, add the scripts.
 
 ## ESLint Cache
 
-
 ```json
 {
   "scripts": {
@@ -78,7 +77,7 @@ const r = (path: string) => fileURLToPath(new URL(`./packages/${path}`, import.m
 export const alias = {
   '@myorg/core': r('core/src/index.ts'),
   '@myorg/utils': r('utils/src/index.ts'),
-  '@myorg/ui': r('ui/src/index.ts'),
+  '@myorg/ui': r('ui/src/index.ts')
   // Add more aliases as needed
 }
 
@@ -86,20 +85,17 @@ export const alias = {
 const raw = fs.readFileSync(join(root, 'tsconfig.alias.json'), 'utf-8').trim()
 const tsconfig = JSON.parse(raw)
 tsconfig.compilerOptions.paths = Object.fromEntries(
-  Object.entries(alias).map(([key, value]) => [key, [`./${relative(root, value)}`]]),
+  Object.entries(alias).map(([key, value]) => [key, [`./${relative(root, value)}`]])
 )
 const newRaw = JSON.stringify(tsconfig, null, 2)
-if (newRaw !== raw)
-  fs.writeFileSync(join(root, 'tsconfig.alias.json'), `${newRaw}\n`, 'utf-8')
+if (newRaw !== raw) fs.writeFileSync(join(root, 'tsconfig.alias.json'), `${newRaw}\n`, 'utf-8')
 ```
 
 Then update the `tsconfig.json` to use the alias file:
 
 ```json
 {
-  "extends": [
-    "./tsconfig.alias.json"
-  ]
+  "extends": ["./tsconfig.alias.json"]
 }
 ```
 
@@ -112,7 +108,7 @@ Reference the centralized alias in all config files:
 import { alias } from './alias'
 
 export default defineConfig({
-  resolve: { alias },
+  resolve: { alias }
 })
 ```
 
@@ -121,6 +117,6 @@ export default defineConfig({
 import { alias } from './alias'
 
 export default defineNuxtConfig({
-  alias,
+  alias
 })
 ```

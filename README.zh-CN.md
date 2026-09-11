@@ -44,14 +44,14 @@ Electron 的 `main`、`preload`、`renderer` 三个目标统一放在 `veldora` 
 
 ## 核心特性
 
-|                           |                                                                   |
-| ------------------------- | ----------------------------------------------------------------- |
-| ⚡ **原生面向 Vite+**     | 基于 Rolldown + Oxc 的构建流程。                                  |
-| 🧩 **统一 Electron 配置** | `main`、`preload`、`renderer` 放在同一个 `veldora` 命名空间。     |
-| 🧭 **共享解析配置**       | alias 与 `resolve.tsconfigPaths` 可以跨 Electron 目标复用。       |
-| 🔒 **V8 Bytecode**        | main / preload 输出可编译为 V8 字节码。                           |
-| 🧵 **Node 侧辅助能力**    | 内置 assets、workers、module path、WASM、native module 类型支持。 |
-| 🖥 **更好的开发体验**      | Electron 协同重启、Renderer 错误转发到终端、Vite 交互快捷键。     |
+|                           |                                                                          |
+| ------------------------- | ------------------------------------------------------------------------ |
+| ⚡ **原生面向 Vite+**     | 基于 Rolldown + Oxc 的构建流程。                                         |
+| 🧩 **统一 Electron 配置** | `main`、`preload`、`renderer` 放在同一个 `veldora` 命名空间。            |
+| 🧭 **共享解析配置**       | alias 与 `resolve.tsconfigPaths` 可以跨 Electron 目标复用。              |
+| 🔒 **V8 Bytecode**        | main / preload 输出可编译为 V8 字节码。                                  |
+| 🧵 **Node 侧辅助能力**    | 内置注入脚本、assets、workers、module path、WASM 与 native module 支持。 |
+| 🖥 **更好的开发体验**      | Electron 协同重启、Renderer 错误转发到终端、Vite 交互快捷键。            |
 
 ## 快速开始
 
@@ -127,6 +127,7 @@ import 'veldorajs/node'
 
 - Vite `UserConfig` 上的 `veldora`
 - `process.env.ELECTRON_RENDERER_URL`
+- `?inject`
 - `?nodeWorker`
 - `?modulePath`
 - `?asset`
@@ -300,6 +301,53 @@ export default defineConfig({
 })
 ```
 
+## 注入脚本
+
+Veldora 支持通过 `?inject` 将一个独立的 TypeScript 或 JavaScript 模块编译为可直接执行的 JavaScript 字符串。
+
+```ts
+import script from './get-user.ts?inject'
+```
+
+导入得到的值类型为 `string`。执行这段脚本时，会自动调用源模块的默认导出函数，并保留它的返回值。
+
+例如：
+
+```ts
+// get-user.ts
+export default async () => {
+  const response = await fetch('https://example.com/api/user')
+  return response.json()
+}
+```
+
+可以直接配合 Electron 的 `webContents.executeJavaScript` 使用：
+
+```ts
+import getUserScript from './get-user.ts?inject'
+
+const user = await window.webContents.executeJavaScript(getUserScript)
+```
+
+`?inject` 仅在 Electron `main` target 中提供。
+
+Inject 模块需要保持独立，可以包含局部声明以及 TypeScript 类型，但不支持运行时 `import` 和具名 `export`：
+
+```ts
+const endpoint = 'https://example.com/api/user'
+
+function normalize(value: unknown) {
+  return value
+}
+
+export default async () => {
+  const response = await fetch(endpoint)
+  return normalize(await response.json())
+}
+```
+
+Veldora 会使用 Oxc 转换模块，并生成面向 Electron 内置 Chromium 版本的可执行脚本；当无法探测到 Electron 版本时回退到 ESNext。
+
 ## Node 侧 Import Helpers
 
 启用 `veldorajs/node` 后，这些 Veldora 特殊导入都可以获得完整类型：
@@ -311,6 +359,7 @@ import workerModulePath from './worker?modulePath'
 import createWorker from './worker?nodeWorker'
 import nativeAddon from './native/addon.node'
 import loadWasm from './codec.wasm?loader'
+import injectedScript from './script.ts?inject'
 ```
 
 示例：

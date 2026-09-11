@@ -13,7 +13,7 @@ They live in `pnpm-workspace.yaml`; their integrity is recorded in a dedicated e
 
 ```yaml title="pnpm-workspace.yaml"
 configDependencies:
-  my-configs: "1.0.0"
+  my-configs: '1.0.0'
 ```
 
 Add one with the `--config` flag:
@@ -71,9 +71,9 @@ Reference patches stored inside a config dependency:
 
 ```yaml title="pnpm-workspace.yaml"
 configDependencies:
-  my-patches: "1.0.0"
+  my-patches: '1.0.0'
 patchedDependencies:
-  react: "node_modules/.pnpm-config/my-patches/react.patch"
+  react: 'node_modules/.pnpm-config/my-patches/react.patch'
 ```
 
 ## Key Points

@@ -22,7 +22,7 @@ On conflicting requirements (e.g. one dep needs `react@^16`, another `react@^17`
 ## Strict Peer Dependencies
 
 ```yaml title="pnpm-workspace.yaml"
-strictPeerDependencies: true   # default false
+strictPeerDependencies: true # default false
 ```
 
 When strict, commands fail on a missing or invalid peer dependency in the tree.
@@ -30,14 +30,14 @@ When strict, commands fail on a missing or invalid peer dependency in the tree.
 ## Resolve from workspace root
 
 ```yaml title="pnpm-workspace.yaml"
-resolvePeersFromWorkspaceRoot: true   # default; install shared peers once at the root
+resolvePeersFromWorkspaceRoot: true # default; install shared peers once at the root
 ```
 
 ## Deduplicate peers
 
 ```yaml title="pnpm-workspace.yaml"
-dedupePeerDependents: true   # default; share package instances across projects when peers match
-dedupePeers: false           # v10.33+: version-only peer suffixes (name@version), fewer instances
+dedupePeerDependents: true # default; share package instances across projects when peers match
+dedupePeers: false # v10.33+: version-only peer suffixes (name@version), fewer instances
 ```
 
 ## Peer Dependency Rules
@@ -73,7 +73,7 @@ Allow specific versions that would otherwise warn. Target a specific parent with
 peerDependencyRules:
   allowedVersions:
     react: '17'
-    'button@2>react': '17'   # only when react is a peer of button@2
+    'button@2>react': '17' # only when react is a peer of button@2
 ```
 
 ### allowAny
@@ -113,7 +113,7 @@ Workspace packages can satisfy peer dependencies:
   }
 }
 
-// packages/components/package.json  
+// packages/components/package.json
 {
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0"
@@ -198,4 +198,3 @@ Source references:
 - https://pnpm.io/settings#autoinstallpeers
 - https://pnpm.io/cli/peers
 -->
-

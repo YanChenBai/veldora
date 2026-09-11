@@ -3,7 +3,7 @@ name: antfu
 description: Anthony Fu's opinionated tooling and conventions for JavaScript/TypeScript projects. Use when setting up new projects, configuring ESLint/Prettier alternatives, monorepos, library publishing, or when the user mentions Anthony Fu's preferences.
 metadata:
   author: Anthony Fu
-  version: "2026.06.22"
+  version: '2026.06.22'
 ---
 
 ## Coding Practices
@@ -35,7 +35,7 @@ metadata:
 Favor explicit, traceable code over implicit "magic". A reader (human or agent) should be able to follow where every name comes from without running tooling.
 
 - **Explicit imports**: Prefer explicit `import` statements. Avoid auto-imports — when a framework provides them (e.g. Nuxt/Nitro), turn them off for new projects (see [app-development](references/app-development.md)).
-- **No path aliases by default**: Use relative imports (`./foo`, `../bar`). Only use path aliases (`@/`, `~/`, `#imports`, etc.) when they are *already* configured in the project; don't introduce new ones for greenfield code.
+- **No path aliases by default**: Use relative imports (`./foo`, `../bar`). Only use path aliases (`@/`, `~/`, `#imports`, etc.) when they are _already_ configured in the project; don't introduce new ones for greenfield code.
 
 ### Comments
 
@@ -55,15 +55,15 @@ Favor explicit, traceable code over implicit "magic". A reader (human or agent) 
 
 ### @antfu/ni Commands
 
-| Command | Description |
-|---------|-------------|
-| `ni` | Install dependencies |
-| `ni <pkg>` / `ni -D <pkg>` | Add dependency / dev dependency |
-| `nr <script>` | Run script |
-| `nu` | Upgrade dependencies |
-| `nun <pkg>` | Uninstall dependency |
-| `nci` | Clean install (`pnpm i --frozen-lockfile`) |
-| `nlx <pkg>` | Execute package (`npx`) |
+| Command                    | Description                                |
+| -------------------------- | ------------------------------------------ |
+| `ni`                       | Install dependencies                       |
+| `ni <pkg>` / `ni -D <pkg>` | Add dependency / dev dependency            |
+| `nr <script>`              | Run script                                 |
+| `nu`                       | Upgrade dependencies                       |
+| `nun <pkg>`                | Uninstall dependency                       |
+| `nci`                      | Clean install (`pnpm i --frozen-lockfile`) |
+| `nlx <pkg>`                | Execute package (`npx`)                    |
 
 ### Checking npm Package Versions
 
@@ -106,7 +106,6 @@ import antfu from '@antfu/eslint-config'
 export default antfu()
 ```
 
-
 When completing tasks, run `pnpm run lint --fix` to format the code and fix coding style.
 
 For detailed configuration options: [antfu-eslint-config](references/antfu-eslint-config.md)
@@ -129,12 +128,12 @@ For detailed configuration options: [antfu-eslint-config](references/antfu-eslin
 
 Use named catalogs in `pnpm-workspace.yaml` for version management:
 
-| Catalog | Purpose |
-|---------|---------|
-| `prod` | Production dependencies |
-| `inlined` | Bundler-inlined dependencies |
-| `dev` | Dev tools (linter, bundler, testing) |
-| `frontend` | Frontend libraries |
+| Catalog    | Purpose                              |
+| ---------- | ------------------------------------ |
+| `prod`     | Production dependencies              |
+| `inlined`  | Bundler-inlined dependencies         |
+| `dev`      | Dev tools (linter, bundler, testing) |
+| `frontend` | Frontend libraries                   |
 
 Avoid the default catalog. Catalog names can be adjusted per project needs.
 
@@ -142,10 +141,10 @@ Avoid the default catalog. Catalog names can be adjusted per project needs.
 
 ## References
 
-| Topic | Description | Reference |
-|-------|-------------|-----------|
-| ESLint Config | Framework support, formatters, rule overrides, VS Code settings | [antfu-eslint-config](references/antfu-eslint-config.md) |
-| Project Setup | .gitignore, GitHub Actions, VS Code extensions | [setting-up](references/setting-up.md) |
-| App Development | Vue/Nuxt/UnoCSS conventions, auto-import control, Storybook component testing | [app-development](references/app-development.md) |
-| Library Development | tsdown bundling, pure ESM publishing | [library-development](references/library-development.md) |
-| Monorepo | pnpm workspaces, centralized alias, Turborepo | [monorepo](references/monorepo.md) |
+| Topic               | Description                                                                   | Reference                                                |
+| ------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------- |
+| ESLint Config       | Framework support, formatters, rule overrides, VS Code settings               | [antfu-eslint-config](references/antfu-eslint-config.md) |
+| Project Setup       | .gitignore, GitHub Actions, VS Code extensions                                | [setting-up](references/setting-up.md)                   |
+| App Development     | Vue/Nuxt/UnoCSS conventions, auto-import control, Storybook component testing | [app-development](references/app-development.md)         |
+| Library Development | tsdown bundling, pure ESM publishing                                          | [library-development](references/library-development.md) |
+| Monorepo            | pnpm workspaces, centralized alias, Turborepo                                 | [monorepo](references/monorepo.md)                       |

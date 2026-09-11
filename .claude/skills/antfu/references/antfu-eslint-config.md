@@ -23,8 +23,8 @@ export default antfu({
 
   // Stylistic options
   stylistic: {
-    indent: 2,        // 2, 4, or 'tab'
-    quotes: 'single', // or 'double'
+    indent: 2, // 2, 4, or 'tab'
+    quotes: 'single' // or 'double'
   },
 
   // Framework support (auto-detected, but can be explicit)
@@ -33,7 +33,7 @@ export default antfu({
 
   // Disable specific language support
   jsonc: false,
-  yaml: false,
+  yaml: false
 })
 ```
 
@@ -47,7 +47,7 @@ Vue accessibility:
 export default antfu({
   vue: {
     a11y: true
-  },
+  }
 })
 // Requires: pnpm add -D eslint-plugin-vuejs-accessibility
 ```
@@ -56,7 +56,7 @@ export default antfu({
 
 ```js
 export default antfu({
-  react: true,
+  react: true
 })
 // Requires: pnpm add -D @eslint-react/eslint-plugin eslint-plugin-react-hooks eslint-plugin-react-refresh
 ```
@@ -65,7 +65,7 @@ export default antfu({
 
 ```js
 export default antfu({
-  nextjs: true,
+  nextjs: true
 })
 // Requires: pnpm add -D @next/eslint-plugin-next
 ```
@@ -74,7 +74,7 @@ export default antfu({
 
 ```js
 export default antfu({
-  svelte: true,
+  svelte: true
 })
 // Requires: pnpm add -D eslint-plugin-svelte
 ```
@@ -83,7 +83,7 @@ export default antfu({
 
 ```js
 export default antfu({
-  astro: true,
+  astro: true
 })
 // Requires: pnpm add -D eslint-plugin-astro
 ```
@@ -92,7 +92,7 @@ export default antfu({
 
 ```js
 export default antfu({
-  solid: true,
+  solid: true
 })
 // Requires: pnpm add -D eslint-plugin-solid
 ```
@@ -101,7 +101,7 @@ export default antfu({
 
 ```js
 export default antfu({
-  unocss: true,
+  unocss: true
 })
 // Requires: pnpm add -D @unocss/eslint-plugin
 ```
@@ -113,8 +113,8 @@ For files ESLint doesn't handle natively:
 ```js
 export default antfu({
   formatters: {
-    css: true,      // Format CSS, LESS, SCSS (uses Prettier)
-    html: true,     // Format HTML (uses Prettier)
+    css: true, // Format CSS, LESS, SCSS (uses Prettier)
+    html: true, // Format HTML (uses Prettier)
     markdown: 'prettier' // or 'dprint'
   }
 })
@@ -133,8 +133,8 @@ export default antfu(
   // Additional arguments: ESLint flat configs
   {
     rules: {
-      'style/semi': ['error', 'never'],
-    },
+      'style/semi': ['error', 'never']
+    }
   }
 )
 ```
@@ -145,14 +145,14 @@ export default antfu(
 export default antfu({
   vue: {
     overrides: {
-      'vue/operator-linebreak': ['error', 'before'],
-    },
+      'vue/operator-linebreak': ['error', 'before']
+    }
   },
   typescript: {
     overrides: {
-      'ts/consistent-type-definitions': ['error', 'interface'],
-    },
-  },
+      'ts/consistent-type-definitions': ['error', 'interface']
+    }
+  }
 })
 ```
 
@@ -164,8 +164,8 @@ export default antfu(
   {
     files: ['**/*.vue'],
     rules: {
-      'vue/operator-linebreak': ['error', 'before'],
-    },
+      'vue/operator-linebreak': ['error', 'before']
+    }
   }
 )
 ```
@@ -174,15 +174,15 @@ export default antfu(
 
 The config renames plugin prefixes for consistency:
 
-| New Prefix | Original |
-|------------|----------|
-| `ts/*` | `@typescript-eslint/*` |
-| `style/*` | `@stylistic/*` |
-| `import/*` | `import-lite/*` |
-| `node/*` | `n/*` |
-| `yaml/*` | `yml/*` |
-| `test/*` | `vitest/*` |
-| `next/*` | `@next/next` |
+| New Prefix | Original               |
+| ---------- | ---------------------- |
+| `ts/*`     | `@typescript-eslint/*` |
+| `style/*`  | `@stylistic/*`         |
+| `import/*` | `import-lite/*`        |
+| `node/*`   | `n/*`                  |
+| `yaml/*`   | `yml/*`                |
+| `test/*`   | `vitest/*`             |
+| `next/*`   | `@next/next`           |
 
 Use the new prefix when overriding or disabling rules:
 
@@ -198,8 +198,8 @@ Enable TypeScript type checking:
 ```js
 export default antfu({
   typescript: {
-    tsconfigPath: 'tsconfig.json',
-  },
+    tsconfigPath: 'tsconfig.json'
+  }
 })
 ```
 
@@ -212,11 +212,11 @@ export default antfu()
   .prepend(/* configs before main */)
   .override('antfu/stylistic/rules', {
     rules: {
-      'style/generator-star-spacing': ['error', { after: true, before: false }],
+      'style/generator-star-spacing': ['error', { after: true, before: false }]
     }
   })
   .renamePlugins({
-    'old-prefix': 'new-prefix',
+    'old-prefix': 'new-prefix'
   })
 ```
 
@@ -294,7 +294,7 @@ Add to `.vscode/settings.json`:
 }
 ```
 
-<!-- 
+<!--
 Source references:
 - https://github.com/antfu/eslint-config
 - https://raw.githubusercontent.com/antfu/eslint-config/refs/heads/main/README.md

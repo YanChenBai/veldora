@@ -14,6 +14,12 @@ declare module '*?modulePath' {
   export default src
 }
 
+// inject script
+declare module '*?inject' {
+  const script: string
+  export default script
+}
+
 // node asset
 declare module '*?asset' {
   const src: string

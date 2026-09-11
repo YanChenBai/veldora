@@ -44,14 +44,14 @@ When both are present, `veldora.config.*` takes precedence.
 
 ## Highlights
 
-|                                  |                                                                               |
-| -------------------------------- | ----------------------------------------------------------------------------- |
-| ⚡ **Vite+ native**              | Rolldown + Oxc based workflow.                                                |
-| 🧩 **Unified Electron config**   | Configure `main`, `preload`, and `renderer` together.                         |
-| 🧭 **Shared resolution**         | Reuse aliases and `resolve.tsconfigPaths` across Electron targets.            |
-| 🔒 **V8 bytecode**               | Compile main/preload output to V8 bytecode.                                   |
-| 🧵 **Node helpers**              | Typed assets, workers, module paths, WASM, and native modules.                |
-| 🖥 **Developer-friendly runtime** | Coordinated restarts, terminal-forwarded renderer errors, and Vite shortcuts. |
+|                                  |                                                                                |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| ⚡ **Vite+ native**              | Rolldown + Oxc based workflow.                                                 |
+| 🧩 **Unified Electron config**   | Configure `main`, `preload`, and `renderer` together.                          |
+| 🧭 **Shared resolution**         | Reuse aliases and `resolve.tsconfigPaths` across Electron targets.             |
+| 🔒 **V8 bytecode**               | Compile main/preload output to V8 bytecode.                                    |
+| 🧵 **Node helpers**              | Inject scripts, typed assets, workers, module paths, WASM, and native modules. |
+| 🖥 **Developer-friendly runtime** | Coordinated restarts, terminal-forwarded renderer errors, and Vite shortcuts.  |
 
 ## Quick Start
 
@@ -123,6 +123,7 @@ It provides ambient types for:
 
 - `veldora` on Vite `UserConfig`
 - `process.env.ELECTRON_RENDERER_URL`
+- `?inject`
 - `?nodeWorker`
 - `?modulePath`
 - `?asset`
@@ -316,6 +317,53 @@ export default defineConfig({
 })
 ```
 
+## Inject Scripts
+
+Veldora can compile a standalone TypeScript or JavaScript module into an executable JavaScript string with the `?inject` query.
+
+```ts
+import script from './get-user.ts?inject'
+```
+
+The imported value is a `string`. When evaluated, the generated script invokes the source module's default-exported function and preserves its return value.
+
+For example:
+
+```ts
+// get-user.ts
+export default async () => {
+  const response = await fetch('https://example.com/api/user')
+  return response.json()
+}
+```
+
+It can then be executed with APIs such as Electron's `webContents.executeJavaScript`:
+
+```ts
+import getUserScript from './get-user.ts?inject'
+
+const user = await window.webContents.executeJavaScript(getUserScript)
+```
+
+`?inject` is available in the Electron `main` target.
+
+Inject modules must be standalone. They may contain local declarations and TypeScript types, but runtime imports and named exports are not supported:
+
+```ts
+const endpoint = 'https://example.com/api/user'
+
+function normalize(value: unknown) {
+  return value
+}
+
+export default async () => {
+  const response = await fetch(endpoint)
+  return normalize(await response.json())
+}
+```
+
+Veldora transforms the module with Oxc and emits an executable script targeting the Chromium version bundled with the detected Electron release, falling back to ESNext when that version cannot be detected.
+
 ## Node-side Import Helpers
 
 After enabling `veldorajs/node`, Veldora-specific imports are type-safe:
@@ -327,6 +375,7 @@ import workerModulePath from './worker?modulePath'
 import createWorker from './worker?nodeWorker'
 import nativeAddon from './native/addon.node'
 import loadWasm from './codec.wasm?loader'
+import injectedScript from './script.ts?inject'
 ```
 
 Example:

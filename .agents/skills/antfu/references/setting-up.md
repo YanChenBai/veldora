@@ -109,11 +109,11 @@ Configure in `.vscode/extensions.json`:
 }
 ```
 
-| Extension | Description |
-|-----------|-------------|
-| `dbaeumer.vscode-eslint` | ESLint integration for linting and formatting |
-| `antfu.pnpm-catalog-lens` | Shows pnpm catalog version hints inline |
-| `antfu.iconify` | Iconify icon preview and autocomplete |
-| `antfu.unocss` | UnoCSS IntelliSense and syntax highlighting |
-| `antfu.slidev` | Slidev preview and syntax highlighting |
-| `vue.volar` | Vue Language Features |
+| Extension                 | Description                                   |
+| ------------------------- | --------------------------------------------- |
+| `dbaeumer.vscode-eslint`  | ESLint integration for linting and formatting |
+| `antfu.pnpm-catalog-lens` | Shows pnpm catalog version hints inline       |
+| `antfu.iconify`           | Iconify icon preview and autocomplete         |
+| `antfu.unocss`            | UnoCSS IntelliSense and syntax highlighting   |
+| `antfu.slidev`            | Slidev preview and syntax highlighting        |
+| `vue.volar`               | Vue Language Features                         |

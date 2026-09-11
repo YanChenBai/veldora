@@ -20,7 +20,7 @@ For SPA/MPA, nothing changes—options apply to the implicit `client` environmen
 ```ts
 export default defineConfig({
   build: { sourcemap: false },
-  optimizeDeps: { include: ['lib'] },
+  optimizeDeps: { include: ['lib'] }
 })
 ```
 
@@ -28,16 +28,16 @@ export default defineConfig({
 
 ```ts
 export default defineConfig({
-  build: { sourcemap: false },  // Inherited by all environments
-  optimizeDeps: { include: ['lib'] },  // Client only
+  build: { sourcemap: false }, // Inherited by all environments
+  optimizeDeps: { include: ['lib'] }, // Client only
   environments: {
     // SSR environment
     server: {},
     // Edge runtime environment
     edge: {
-      resolve: { noExternal: true },
-    },
-  },
+      resolve: { noExternal: true }
+    }
+  }
 })
 ```
 
@@ -66,9 +66,9 @@ import { customEnvironment } from 'vite-environment-provider'
 export default defineConfig({
   environments: {
     ssr: customEnvironment({
-      build: { outDir: '/dist/ssr' },
-    }),
-  },
+      build: { outDir: '/dist/ssr' }
+    })
+  }
 })
 ```
 
