@@ -97,11 +97,12 @@ pnpm patch-commit <path>
 ```bash
 pnpm patch-remove <pkg>@<version>
 
-# Example  
+# Example
 pnpm patch-remove express@4.18.2
 ```
 
 Or manually:
+
 1. Delete the patch file from `patches/`
 2. Remove the entry from `patchedDependencies` in `pnpm-workspace.yaml`
 3. Run `pnpm install`
@@ -135,7 +136,7 @@ patchedDependencies:
 ### allowUnusedPatches
 
 ```yaml title="pnpm-workspace.yaml"
-allowUnusedPatches: true   # don't fail when a listed patch wasn't applied
+allowUnusedPatches: true # don't fail when a listed patch wasn't applied
 ```
 
 > `ignorePatchFailures` was **removed** in v11. A patch that fails to apply now always throws. When several patches are grouped, all errors are reported together at the end.
@@ -145,6 +146,7 @@ allowUnusedPatches: true   # don't fail when a listed patch wasn't applied
 1. **Version specificity**: Patches are tied to exact versions. Update patches when upgrading dependencies.
 
 2. **Document patches**: Add comments explaining why the patch exists:
+
    ```bash
    # In patches/README.md
    ## express@4.18.2.patch
@@ -166,6 +168,7 @@ ERR_PNPM_PATCH_FAILED  Cannot apply patch
 ```
 
 The package version changed. Recreate the patch:
+
 ```bash
 pnpm patch-remove express@4.18.2
 pnpm patch express@4.18.2
@@ -176,6 +179,7 @@ pnpm patch-commit <path>
 ### Patch not applied
 
 Ensure:
+
 1. Version in `patchedDependencies` matches installed version exactly
 2. Run `pnpm install` after adding patch configuration
 

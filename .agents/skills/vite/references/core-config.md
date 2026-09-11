@@ -25,9 +25,9 @@ Export a function to access command and mode:
 ```ts
 export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
   if (command === 'serve') {
-    return { /* dev config */ }
+    return {/* dev config */}
   } else {
-    return { /* build config */ }
+    return {/* build config */}
   }
 })
 ```
@@ -40,7 +40,7 @@ export default defineConfig(({ command, mode, isSsrBuild, isPreview }) => {
 ```ts
 export default defineConfig(async ({ command, mode }) => {
   const data = await fetchSomething()
-  return { /* config */ }
+  return {/* config */}
 })
 ```
 
@@ -54,14 +54,14 @@ import { defineConfig, loadEnv } from 'vite'
 export default defineConfig(({ mode }) => {
   // Load env files from cwd, include all vars (empty prefix)
   const env = loadEnv(mode, process.cwd(), '')
-  
+
   return {
     define: {
-      __APP_ENV__: JSON.stringify(env.APP_ENV),
+      __APP_ENV__: JSON.stringify(env.APP_ENV)
     },
     server: {
-      port: env.APP_PORT ? Number(env.APP_PORT) : 5173,
-    },
+      port: env.APP_PORT ? Number(env.APP_PORT) : 5173
+    }
   }
 })
 ```
@@ -75,9 +75,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': '/src',
-      '~': '/src',
-    },
-  },
+      '~': '/src'
+    }
+  }
 })
 ```
 
@@ -87,8 +87,8 @@ export default defineConfig({
 export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify('1.0.0'),
-    __API_URL__: 'window.__backend_api_url',
-  },
+    __API_URL__: 'window.__backend_api_url'
+  }
 })
 ```
 
@@ -100,7 +100,7 @@ Values must be JSON-serializable or single identifiers. Non-strings auto-wrapped
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [vue()]
 })
 ```
 
@@ -115,10 +115,10 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
-  },
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
 })
 ```
 
@@ -129,8 +129,8 @@ Default: Baseline Widely Available browsers. Customize:
 ```ts
 export default defineConfig({
   build: {
-    target: 'esnext', // or 'es2020', ['chrome90', 'firefox88']
-  },
+    target: 'esnext' // or 'es2020', ['chrome90', 'firefox88']
+  }
 })
 ```
 

@@ -5,11 +5,11 @@ description: Building and publishing TypeScript libraries with tsdown. Use when 
 
 # Library Development
 
-| Aspect | Choice |
-|--------|--------|
-| Bundler | tsdown |
-| Output | Pure ESM only (no CJS) |
-| DTS | Generated via tsdown |
+| Aspect  | Choice                    |
+| ------- | ------------------------- |
+| Bundler | tsdown                    |
+| Output  | Pure ESM only (no CJS)    |
+| DTS     | Generated via tsdown      |
 | Exports | Auto-generated via tsdown |
 
 ## tsdown Configuration
@@ -24,27 +24,24 @@ export default defineConfig({
   entry: ['src/index.ts'],
   format: ['esm'],
   dts: true,
-  exports: true,
+  exports: true
 })
 ```
 
-| Option | Value | Purpose |
-|--------|-------|---------|
-| `format` | `['esm']` | Pure ESM, no CommonJS |
-| `dts` | `true` | Generate `.d.ts` files |
-| `exports` | `true` | Auto-update `exports` field in `package.json` |
+| Option    | Value     | Purpose                                       |
+| --------- | --------- | --------------------------------------------- |
+| `format`  | `['esm']` | Pure ESM, no CommonJS                         |
+| `dts`     | `true`    | Generate `.d.ts` files                        |
+| `exports` | `true`    | Auto-update `exports` field in `package.json` |
 
 ### Multiple Entry Points
 
 ```ts
 export default defineConfig({
-  entry: [
-    'src/index.ts',
-    'src/utils.ts',
-  ],
+  entry: ['src/index.ts', 'src/utils.ts'],
   format: ['esm'],
   dts: true,
-  exports: true,
+  exports: true
 })
 ```
 
@@ -56,10 +53,10 @@ The `exports: true` option auto-generates the `exports` field in `package.json` 
 
 For published libraries, lock the public API surface so accidental breaking changes appear as a diff in code review.
 
-| Tool | Purpose |
-|------|---------|
-| [`tsnapi`](https://github.com/antfu/tsnapi) | Snapshots runtime exports + type declarations into committed `.snapshot.js` / `.snapshot.d.ts` files via Vitest |
-| [`tsdown-stale-guard`](https://github.com/antfu-collective/tsdown-stale-guard) | Records build input/output hashes so tests fail fast when run against a stale build |
+| Tool                                                                           | Purpose                                                                                                         |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| [`tsnapi`](https://github.com/antfu/tsnapi)                                    | Snapshots runtime exports + type declarations into committed `.snapshot.js` / `.snapshot.d.ts` files via Vitest |
+| [`tsdown-stale-guard`](https://github.com/antfu-collective/tsdown-stale-guard) | Records build input/output hashes so tests fail fast when run against a stale build                             |
 
 Install both as dev dependencies. Wire `tsdown-stale-guard` as a tsdown plugin so every build records its hash:
 
@@ -73,9 +70,7 @@ export default defineConfig({
   format: ['esm'],
   dts: true,
   exports: true,
-  plugins: [
-    StaleGuardRecorder(),
-  ],
+  plugins: [StaleGuardRecorder()]
 })
 ```
 

@@ -19,18 +19,18 @@ export default defineConfig({
     lib: {
       entry: resolve(import.meta.dirname, 'lib/main.ts'),
       name: 'MyLib',
-      fileName: 'my-lib',
+      fileName: 'my-lib'
     },
     rolldownOptions: {
       external: ['vue', 'react'],
       output: {
         globals: {
           vue: 'Vue',
-          react: 'React',
-        },
-      },
-    },
-  },
+          react: 'React'
+        }
+      }
+    }
+  }
 })
 ```
 
@@ -80,10 +80,10 @@ export default defineConfig({
     rolldownOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
-        nested: resolve(import.meta.dirname, 'nested/index.html'),
-      },
-    },
-  },
+        nested: resolve(import.meta.dirname, 'nested/index.html')
+      }
+    }
+  }
 })
 ```
 
@@ -110,7 +110,7 @@ import { createServer } from 'vite'
 const server = await createServer({
   configFile: false,
   root: import.meta.dirname,
-  server: { port: 1337 },
+  server: { port: 1337 }
 })
 
 await server.listen()
@@ -124,7 +124,7 @@ import { build } from 'vite'
 
 await build({
   root: './project',
-  build: { outDir: 'dist' },
+  build: { outDir: 'dist' }
 })
 ```
 
@@ -134,7 +134,7 @@ await build({
 import { preview } from 'vite'
 
 const previewServer = await preview({
-  preview: { port: 8080, open: true },
+  preview: { port: 8080, open: true }
 })
 previewServer.printUrls()
 ```

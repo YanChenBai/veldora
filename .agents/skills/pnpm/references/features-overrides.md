@@ -22,61 +22,70 @@ overrides:
   lodash: ^4.17.21
 
   # Override specific version range
-  "foo@^1.0.0": ^1.2.3
+  'foo@^1.0.0': ^1.2.3
 
   # Override nested dependency (only zoo inside qar@1)
-  "qar@1>zoo": "2"
+  'qar@1>zoo': '2'
 
   # Override to different package
-  "underscore": "npm:lodash@^4.17.21"
+  'underscore': 'npm:lodash@^4.17.21'
 
   # Reference a catalog so the version stays in sync
-  "react": "catalog:"
+  'react': 'catalog:'
 ```
 
 ## Override Patterns
 
 ### Override all instances
+
 ```yaml
 overrides:
   lodash: ^4.17.21
 ```
+
 Forces all lodash installations to use ^4.17.21.
 
 ### Override specific parent version
+
 ```yaml
 overrides:
-  "foo@^1.0.0": ^1.2.3
+  'foo@^1.0.0': ^1.2.3
 ```
+
 Only override foo when the requested version matches ^1.0.0.
 
 ### Override nested dependency
+
 ```yaml
 overrides:
-  "express>cookie": ^0.6.0
-  "foo@1.x>bar@^2.0.0>qux": ^1.0.0
+  'express>cookie': ^0.6.0
+  'foo@1.x>bar@^2.0.0>qux': ^1.0.0
 ```
+
 Override cookie only when it's a dependency of express.
 
 ### Replace with different package
+
 ```yaml
 overrides:
   # Replace underscore with lodash
-  "underscore": "npm:lodash@^4.17.21"
-  
+  'underscore': 'npm:lodash@^4.17.21'
+
   # Use local file
-  "some-pkg": "file:./local-pkg"
-  
+  'some-pkg': 'file:./local-pkg'
+
   # Use git
-  "some-pkg": "github:user/repo#commit"
+  'some-pkg': 'github:user/repo#commit'
 ```
 
 ### Remove a dependency
+
 ```yaml
 overrides:
-  "unwanted-pkg": "-"
-  "foo@1.0.0>bar": "-"   # great for skipping unused optionalDependencies
+  'unwanted-pkg': '-'
+  'foo@1.0.0>bar': '-' # great for skipping unused optionalDependencies
 ```
+
 The `-` removes the package entirely.
 
 ### Override peer dependencies
@@ -85,7 +94,7 @@ Overrides also apply to `peerDependencies`:
 
 ```yaml title="pnpm-workspace.yaml"
 overrides:
-  "react-dom>react": "18.1.0"
+  'react-dom>react': '18.1.0'
 ```
 
 - Semver ranges, `workspace:`, and `catalog:` keep the entry as a peer dependency.
@@ -101,8 +110,8 @@ Force patched version of vulnerable package:
 ```yaml
 overrides:
   # Fix CVE in transitive dependency
-  "minimist": "^1.2.6"
-  "json5": "^2.2.3"
+  'minimist': '^1.2.6'
+  'json5': '^2.2.3'
 ```
 
 ### Deduplicate Dependencies
@@ -111,22 +120,22 @@ Force single version when multiple are installed:
 
 ```yaml
 overrides:
-  "react": "^18.2.0"
-  "react-dom": "^18.2.0"
+  'react': '^18.2.0'
+  'react-dom': '^18.2.0'
 ```
 
 ### Fix Peer Dependency Issues
 
 ```yaml
 overrides:
-  "@types/react": "^18.2.0"
+  '@types/react': '^18.2.0'
 ```
 
 ### Replace Deprecated Package
 
 ```yaml
 overrides:
-  "request": "npm:@cypress/request@^3.0.0"
+  'request': 'npm:@cypress/request@^3.0.0'
 ```
 
 ## Hooks Alternative
@@ -167,12 +176,12 @@ packageExtensions:
 
 ## Overrides vs Catalogs
 
-| Feature | Overrides | Catalogs |
-|---------|-----------|----------|
-| Affects | All dependencies (including transitive) | Direct dependencies only |
-| Usage | Automatic | Explicit `catalog:` reference |
-| Purpose | Force versions, fix issues | Version management |
-| Granularity | Can target specific parents | Package-wide only |
+| Feature     | Overrides                               | Catalogs                      |
+| ----------- | --------------------------------------- | ----------------------------- |
+| Affects     | All dependencies (including transitive) | Direct dependencies only      |
+| Usage       | Automatic                               | Explicit `catalog:` reference |
+| Purpose     | Force versions, fix issues              | Version management            |
+| Granularity | Can target specific parents             | Package-wide only             |
 
 ## Debugging
 

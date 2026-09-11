@@ -12,7 +12,7 @@ Vite plugins extend Rolldown's plugin interface with Vite-specific hooks.
 ```ts
 function myPlugin(): Plugin {
   return {
-    name: 'my-plugin',
+    name: 'my-plugin'
     // hooks...
   }
 }
@@ -29,9 +29,9 @@ const plugin = () => ({
   name: 'add-alias',
   config: () => ({
     resolve: {
-      alias: { foo: 'bar' },
-    },
-  }),
+      alias: { foo: 'bar' }
+    }
+  })
 })
 ```
 
@@ -48,8 +48,10 @@ const plugin = () => {
       config = resolvedConfig
     },
     transform(code, id) {
-      if (config.command === 'serve') { /* dev */ }
-    },
+      if (config.command === 'serve') {
+        /* dev */
+      }
+    }
   }
 }
 ```
@@ -66,7 +68,7 @@ const plugin = () => ({
       // handle request
       next()
     })
-  },
+  }
 })
 ```
 
@@ -91,7 +93,7 @@ const plugin = () => ({
   name: 'html-transform',
   transformIndexHtml(html) {
     return html.replace(/<title>(.*?)<\/title>/, '<title>New Title</title>')
-  },
+  }
 })
 ```
 
@@ -134,7 +136,7 @@ const plugin = () => {
       if (id === resolvedId) {
         return `export const msg = "from virtual module"`
       }
-    },
+    }
   }
 }
 ```
