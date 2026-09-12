@@ -142,12 +142,39 @@ describe('injectScriptPlugin', () => {
     expect(await run(source)).toBe('function')
   })
 
-  it('keeps a named default class declaration intact', async () => {
-    // The wrapper invokes the default export, so a class cannot be run; the
-    // emitted script is what shows whether its binding survived.
-    const script = await compile(`export default class Main {}\nconst alias = Main`)
-    expect(script).toContain('class Main {}')
-    expect(script).toContain('return Main()')
+  it.each([
+    ['a named class declaration', 'export default class Main {}', 'a class'],
+    ['an anonymous class declaration', 'export default class {}', 'a class'],
+    ['a number literal', 'export default 42', 'a literal value'],
+    ['a string literal', `export default 'label'`, 'a literal value'],
+    ['a boolean literal', 'export default true', 'a literal value'],
+    ['a null literal', 'export default null', 'a literal value'],
+    ['a bigint literal', 'export default 1n', 'a literal value'],
+    ['a regular expression literal', 'export default /re/g', 'a literal value'],
+    ['an object literal', 'export default {}', 'an object literal'],
+    ['an array literal', 'export default []', 'an array literal'],
+    ['an untagged template literal', 'export default `label`', 'a template literal'],
+    ['a class in parentheses', 'export default (class {})', 'a class'],
+    ['a literal behind a type assertion', 'export default (42 as number)', 'a literal value'],
+    ['a literal behind satisfies', 'export default (42 satisfies number)', 'a literal value'],
+    ['a literal behind a non-null assertion', 'export default (42!)', 'a literal value']
+  ])('rejects %s as a default export', async (_label, source, reason) => {
+    const message = await compileError(source)
+    expect(message).toContain('must default-export a function')
+    expect(message).toContain(reason)
+  })
+
+  it('allows default exports whose value cannot be known statically', async () => {
+    const viaCall = [
+      `function make() { return () => 'made' }`,
+      `const callable = 1 > 0 ? make() : null`,
+      `export default callable`
+    ].join('\n')
+    expect(await run(viaCall)).toBe('made')
+
+    // A tagged template calls a function, so it stays callable.
+    const tagged = ["function tag() { return () => 'tagged' }", 'export default tag`x`'].join('\n')
+    expect(await run(tagged)).toBe('tagged')
   })
 
   it('transpiles the script for the Electron renderer runtime', async () => {

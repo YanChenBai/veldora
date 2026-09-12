@@ -346,6 +346,8 @@ export default async () => {
 }
 ```
 
+由于生成的脚本会调用默认导出，该值必须是可调用的。对于静态可判定为不可调用的默认导出——类、对象/数组字面量、原始值字面量、无标签的模板字面量——Veldora 会在构建期直接报错（包括被括号或 TypeScript 的 `as` / `satisfies` / `!` 断言包裹的情况），而不是留到 renderer 里抛出 `TypeError`。标识符、成员访问和函数调用不会被检查，因为它们的值无法静态确定。
+
 Veldora 会使用 Oxc 转换模块，并生成面向 Electron 内置 Chromium 版本的可执行脚本；当无法探测到 Electron 版本时回退到 ESNext。
 
 ## Node 侧 Import Helpers
