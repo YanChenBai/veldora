@@ -1,28 +1,69 @@
 // Refresh src/electronVersions.json from the official Electron release feed.
 // Invoked by .github/workflows/update-electron-versions.yml on a schedule, and
 // runnable locally with `node scripts/updateElectronVersions.mjs`.
+//
+// `--feed <path|url>` and `--out <path>` point the run at a fixture instead of
+// the checked-in data, which is how the parsing is exercised without network
+// access.
 
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const source = 'https://releases.electronjs.org/releases.json'
-const output = fileURLToPath(new URL('../src/electronVersions.json', import.meta.url))
-const outputName = path.basename(output)
+const defaultOutput = fileURLToPath(new URL('../src/electronVersions.json', import.meta.url))
+
+const option = (name) => {
+  const index = process.argv.indexOf(name)
+  return index === -1 ? undefined : process.argv[index + 1]
+}
 
 // With --check, report staleness via exit code instead of writing the file.
 const checkOnly = process.argv.includes('--check')
+const feed = option('--feed') || source
+const output = option('--out') || defaultOutput
+const outputName = path.basename(output)
 
 // Stable releases only, e.g. "41.10.7" (skips nightlies/betas like "42.0.0-beta.1").
 const stableVersion = /^\d+\.\d+\.\d+$/
+// Chromium reports four components, e.g. "87.0.4280.141"; Node and Electron three.
+const nodeVersion = /^\d+\.\d+\.\d+$/
+const chromeVersion = /^\d+\.\d+\.\d+\.\d+$/
 // Electron <= 10 predates the Vite targets we emit, so the runtime ignores them.
 const minimumMajor = 11
 
-const response = await fetch(source)
-if (!response.ok) {
-  throw new Error(`Failed to fetch ${source}: ${response.status} ${response.statusText}`)
+const loadReleases = async () => {
+  if (!/^https?:/.test(feed)) {
+    return JSON.parse(fs.readFileSync(feed, 'utf-8'))
+  }
+  const response = await fetch(feed)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${feed}: ${response.status} ${response.statusText}`)
+  }
+  return response.json()
 }
-const releases = await response.json()
+
+/**
+ * Reads a version field the feed is expected to provide.
+ *
+ * `src/electron.ts` splits these strings at build time, so a missing or
+ * malformed field would otherwise be written into `src/` and only surface as a
+ * crash in every user build, long after this script reported success.
+ *
+ * @param {unknown} value
+ * @param {RegExp} pattern
+ * @param {string} field
+ * @param {string} release
+ */
+const readVersion = (value, pattern, field, release) => {
+  if (typeof value !== 'string' || !pattern.test(value)) {
+    throw new Error(
+      `Unexpected ${field} version for electron ${release}: ${JSON.stringify(value)}. ` +
+        `The ${source} feed may have changed shape.`
+    )
+  }
+  return value
+}
 
 /** @param {number[]} a @param {number[]} b */
 const compare = (a, b) => {
@@ -32,6 +73,8 @@ const compare = (a, b) => {
   }
   return 0
 }
+
+const releases = await loadReleases()
 
 // Keep the highest stable release of every Electron major.
 /** @type {Map<number, { parts: number[], entry: { electron: string, node: string, chrome: string } }>} */
@@ -45,7 +88,11 @@ for (const release of releases) {
   if (current && compare(parts, current.parts) <= 0) continue
   latest.set(major, {
     parts,
-    entry: { electron: release.version, node: release.node, chrome: release.chrome }
+    entry: {
+      electron: release.version,
+      node: readVersion(release.node, nodeVersion, 'node', release.version),
+      chrome: readVersion(release.chrome, chromeVersion, 'chrome', release.version)
+    }
   })
 }
 

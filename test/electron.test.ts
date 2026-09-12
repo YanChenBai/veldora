@@ -22,11 +22,10 @@ describe('electron build targets', () => {
   })
 
   it('maps a known electron major to its bundled node and chrome versions', () => {
-    const entry = electronVersions.versions[String(newestMajor)]
     process.env.ELECTRON_MAJOR_VER = String(newestMajor)
 
-    expect(getElectronNodeTarget()).toBe(`node${entry.node.split('.').slice(0, 2).join('.')}`)
-    expect(getElectronChromeTarget()).toBe(`chrome${entry.chrome.split('.')[0]}`)
+    expect(getElectronNodeTarget()).toBe(newestNodeTarget)
+    expect(getElectronChromeTarget()).toBe(newestChromeTarget)
   })
 
   it('falls back to the newest known entry for a newer electron major', () => {
@@ -50,6 +49,34 @@ describe('electron build targets', () => {
 
     expect(getElectronNodeTarget()).toBe('')
     expect(getElectronChromeTarget()).toBe('')
+  })
+})
+
+describe('electron version data', () => {
+  // The resolved targets are dereferenced with `.split()` at build time, so a
+  // malformed entry fails every user build rather than this test. The updater
+  // validates the feed for the same reason; this guards the checked-in file,
+  // including changes that arrive by hand.
+  const entries = Object.entries(electronVersions.versions)
+
+  it('is not empty and carries its provenance', () => {
+    expect(entries.length).toBeGreaterThan(0)
+    expect(electronVersions.source).toBe('https://releases.electronjs.org/releases.json')
+    expect(electronVersions.updated).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('keys every entry by its own electron major', () => {
+    for (const [key, entry] of entries) {
+      expect(Number(key)).not.toBeNaN()
+      expect(entry.electron.split('.')[0]).toBe(key)
+    }
+  })
+
+  it('stores node and chrome versions in the shape the runtime splits', () => {
+    for (const [key, entry] of entries) {
+      expect(entry.node, `node for electron ${key}`).toMatch(/^\d+\.\d+\.\d+$/)
+      expect(entry.chrome, `chrome for electron ${key}`).toMatch(/^\d+\.\d+\.\d+\.\d+$/)
+    }
   })
 })
 
