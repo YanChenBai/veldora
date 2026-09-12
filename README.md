@@ -503,6 +503,17 @@ Contributions are welcome.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) before opening a pull request.
 
+## Acknowledgements
+
+Veldora is a derivative work of [electron-vite](https://github.com/alex8088/electron-vite), the next-generation Electron build tooling created by [alex8088](https://github.com/alex8088). Veldora keeps the familiar electron-vite development model and rebuilds the underlying toolchain on Vite+.
+
+- Original project: [alex8088/electron-vite](https://github.com/alex8088/electron-vite)
+- Original author: [alex8088](https://github.com/alex8088)
+- Original documentation: [electron-vite.org](https://electron-vite.org)
+- Original license: MIT
+
+Thanks to alex8088 and all the electron-vite contributors for the foundation this project builds upon.
+
 ## License
 
 [MIT](./LICENSE) © byc

@@ -483,6 +483,17 @@ vp migrate
 
 提交 Pull Request 前请先阅读 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
+## 致谢
+
+Veldora 派生自 [electron-vite](https://github.com/alex8088/electron-vite)，它是由 [alex8088](https://github.com/alex8088) 创建的新一代 Electron 开发构建工具。Veldora 保留了 electron-vite 熟悉的开发模式，并把底层工具链重构到 Vite+ 之上。
+
+- 旧项目：[alex8088/electron-vite](https://github.com/alex8088/electron-vite)
+- 旧项目作者：[alex8088](https://github.com/alex8088)
+- 旧项目文档：[electron-vite.org](https://electron-vite.org)
+- 旧项目协议：MIT
+
+感谢 alex8088 以及所有 electron-vite 贡献者打下的基础。
+
 ## License
 
 [MIT](./LICENSE) © byc

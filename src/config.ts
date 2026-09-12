@@ -67,7 +67,7 @@ interface ExternalizeDepsMixin {
 interface BytecodeMixin {
   /**
    * Options pass on to `bytecode` plugin in veldora.
-   * https://electron-vite.org/guide/source-code-protection#options
+   * https://veldora.dev/docs/guide/bytecode/
    *
    * Compile source code to v8 bytecode.
    */

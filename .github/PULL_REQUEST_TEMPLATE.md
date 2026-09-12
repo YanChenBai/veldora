@@ -19,6 +19,6 @@
 
 ### Before submitting the PR, please make sure you do the following
 
-- [ ] Read the [Contributing Guidelines](https://github.com/alex8088/electron-vite/blob/master/CONTRIBUTING.md).
-- [ ] Read the [Pull Request Guidelines](https://github.com/alex8088/electron-vite/blob/master/CONTRIBUTING.md#pull-request) and follow the [Commit Convention](https://github.com/alex8088/electron-vite/blob/master/.github/commit-convention.md).
+- [ ] Read the [Contributing Guidelines](https://github.com/YanChenBai/veldora/blob/master/CONTRIBUTING.md).
+- [ ] Read the [Pull Request Guidelines](https://github.com/YanChenBai/veldora/blob/master/CONTRIBUTING.md#pull-request) and follow the [Commit Convention](https://github.com/YanChenBai/veldora/blob/master/.github/commit-convention.md).
 - [ ] Provide a description in this PR that addresses **what** the PR is solving, or reference the issue that it solves (e.g. `fixes #123`).
