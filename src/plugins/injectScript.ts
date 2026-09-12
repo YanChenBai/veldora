@@ -10,6 +10,8 @@ const RUNTIME_HELPERS_PREFIX = '@oxc-project/runtime'
 
 const MODULE_SYNTAX_MESSAGE = 'cannot contain runtime imports or named exports'
 const IMPORT_META_MESSAGE = 'cannot use "import.meta", which is unavailable in a classic script'
+const NOT_CALLABLE_MESSAGE =
+  'must default-export a function, because the generated script invokes it'
 
 interface Node {
   type: string
@@ -97,6 +99,62 @@ function getDeclaredName(node: Node): string | null {
   return (node as { id?: { name: string } | null }).id?.name ?? null
 }
 
+/** Strips the wrappers that hold no runtime value of their own. */
+function unwrapExportExpression(node: Node): Node {
+  let current = node
+  for (;;) {
+    if (
+      current.type === 'ParenthesizedExpression' ||
+      current.type === 'TSAsExpression' ||
+      current.type === 'TSSatisfiesExpression' ||
+      current.type === 'TSNonNullExpression'
+    ) {
+      const inner = (current as { expression?: Node }).expression
+      if (!inner) {
+        return current
+      }
+      current = inner
+      continue
+    }
+    return current
+  }
+}
+
+/**
+ * Describes a default export whose value cannot be called, or `null` when it
+ * still might be.
+ *
+ * The generated wrapper invokes the default export, so a value that is
+ * statically known to be non-callable can only fail later inside the renderer,
+ * with a `TypeError` pointing at the emitted script instead of the module.
+ *
+ * This is necessarily best-effort: identifiers, member access, and calls can
+ * resolve to anything and stay allowed. `export { fn as default }` is left
+ * alone as well, because resolving `fn` would require binding tracking.
+ */
+function findNonCallableExport(declaration: Node): string | null {
+  const node = unwrapExportExpression(declaration)
+
+  switch (node.type) {
+    case 'ClassDeclaration':
+    case 'ClassExpression':
+      return 'a class'
+    case 'ObjectExpression':
+      return 'an object literal'
+    case 'ArrayExpression':
+      return 'an array literal'
+    case 'Literal':
+      // Oxc folds numbers, strings, booleans, null, bigint, and regular
+      // expressions into a single node type.
+      return 'a literal value'
+    case 'TemplateLiteral':
+      // A tagged template calls a function, so only untagged ones are strings.
+      return (node as { tag?: unknown }).tag ? null : 'a template literal'
+    default:
+      return null
+  }
+}
+
 export default function injectScriptPlugin(): Plugin {
   return {
     name: 'vite:inject-script',
@@ -171,6 +229,15 @@ export default function injectScriptPlugin(): Plugin {
 
       if (!defaultExport) {
         this.error(`[vite:inject] ${filename} must have a default export`)
+      }
+
+      if (defaultExport.kind === 'declaration') {
+        const nonCallable = findNonCallableExport(defaultExport.node.declaration)
+        if (nonCallable) {
+          this.error(
+            `[vite:inject] ${filename} ${NOT_CALLABLE_MESSAGE} (the default export is ${nonCallable})`
+          )
+        }
       }
 
       const unsupported = findUnsupportedSyntax(program)

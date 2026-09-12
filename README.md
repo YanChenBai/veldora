@@ -362,6 +362,14 @@ export default async () => {
 }
 ```
 
+Because the generated script invokes the default export, that value must be
+callable. Default exports that are statically known to be non-callable — a
+class, an object or array literal, a primitive, or an untagged template literal
+— are rejected at build time (including behind parentheses or a TypeScript
+`as` / `satisfies` / `!` assertion) instead of failing with a `TypeError` in the
+renderer. Identifiers, member access, and calls are left alone, since their
+value cannot be known statically.
+
 Veldora transforms the module with Oxc and emits an executable script targeting the Chromium version bundled with the detected Electron release, falling back to ESNext when that version cannot be detected.
 
 ## Node-side Import Helpers
