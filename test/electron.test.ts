@@ -1,6 +1,84 @@
 import { Readable, Writable } from 'node:stream'
-import { describe, expect, it } from 'vite-plus/test'
-import { filterConsoleOutput, pipeFilteredOutput } from '../src/electron'
+import { afterEach, describe, expect, it } from 'vite-plus/test'
+import electronVersions from '../src/electronVersions.json'
+import {
+  filterConsoleOutput,
+  getElectronChromeTarget,
+  getElectronNodeTarget,
+  pipeFilteredOutput
+} from '../src/electron'
+
+describe('electron build targets', () => {
+  const majors = Object.keys(electronVersions.versions).map(Number)
+  const newestMajor = Math.max(...majors)
+  const newestEntry = electronVersions.versions[String(newestMajor)]
+  const newestNodeTarget = `node${newestEntry.node.split('.').slice(0, 2).join('.')}`
+  const newestChromeTarget = `chrome${newestEntry.chrome.split('.')[0]}`
+  const originalMajorVer = process.env.ELECTRON_MAJOR_VER
+
+  afterEach(() => {
+    if (originalMajorVer === undefined) delete process.env.ELECTRON_MAJOR_VER
+    else process.env.ELECTRON_MAJOR_VER = originalMajorVer
+  })
+
+  it('maps a known electron major to its bundled node and chrome versions', () => {
+    process.env.ELECTRON_MAJOR_VER = String(newestMajor)
+
+    expect(getElectronNodeTarget()).toBe(newestNodeTarget)
+    expect(getElectronChromeTarget()).toBe(newestChromeTarget)
+  })
+
+  it('falls back to the newest known entry for a newer electron major', () => {
+    process.env.ELECTRON_MAJOR_VER = String(newestMajor + 5)
+
+    expect(getElectronNodeTarget()).toBe(newestNodeTarget)
+    expect(getElectronChromeTarget()).toBe(newestChromeTarget)
+  })
+
+  it('maps an end-of-life electron major to its frozen node and chrome versions', () => {
+    // Electron 22 is EOL, so the versions it bundled can never change: this
+    // pins the mapping logic independently of the data file.
+    process.env.ELECTRON_MAJOR_VER = '22'
+
+    expect(getElectronNodeTarget()).toBe('node16.17')
+    expect(getElectronChromeTarget()).toBe('chrome108')
+  })
+
+  it('returns no target for electron 10 and below', () => {
+    process.env.ELECTRON_MAJOR_VER = '10'
+
+    expect(getElectronNodeTarget()).toBe('')
+    expect(getElectronChromeTarget()).toBe('')
+  })
+})
+
+describe('electron version data', () => {
+  // The resolved targets are dereferenced with `.split()` at build time, so a
+  // malformed entry fails every user build rather than this test. The updater
+  // validates the feed for the same reason; this guards the checked-in file,
+  // including changes that arrive by hand.
+  const entries = Object.entries(electronVersions.versions)
+
+  it('is not empty and carries its provenance', () => {
+    expect(entries.length).toBeGreaterThan(0)
+    expect(electronVersions.source).toBe('https://releases.electronjs.org/releases.json')
+    expect(electronVersions.updated).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('keys every entry by its own electron major', () => {
+    for (const [key, entry] of entries) {
+      expect(Number(key)).not.toBeNaN()
+      expect(entry.electron.split('.')[0]).toBe(key)
+    }
+  })
+
+  it('stores node and chrome versions in the shape the runtime splits', () => {
+    for (const [key, entry] of entries) {
+      expect(entry.node, `node for electron ${key}`).toMatch(/^\d+\.\d+\.\d+$/)
+      expect(entry.chrome, `chrome for electron ${key}`).toMatch(/^\d+\.\d+\.\d+\.\d+$/)
+    }
+  })
+})
 
 describe('filterConsoleOutput', () => {
   it('forwards lines that do not match the filter', () => {
