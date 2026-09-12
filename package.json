@@ -1,6 +1,6 @@
 {
   "name": "veldorajs",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Next generation Electron build tooling based on Vite+",
   "keywords": [
     "cli",

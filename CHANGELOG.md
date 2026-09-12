@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.0.5
+
+[compare changes](https://github.com/YanChenBai/veldora/compare/v0.0.4...v0.0.5)
+
+### 🚀 Enhancements
+
+- Add built-in inject script support ([195cb58](https://github.com/YanChenBai/veldora/commit/195cb58))
+- **electron:** Source build targets from version data ([#8](https://github.com/YanChenBai/veldora/pull/8))
+
+### 🩹 Fixes
+
+- **inject-script:** Target Electron Chromium and detect exports via AST ([dbd2b4e](https://github.com/YanChenBai/veldora/commit/dbd2b4e))
+- **inject-script:** Reject import.meta and keep named default bindings ([a96573b](https://github.com/YanChenBai/veldora/commit/a96573b))
+- **inject-script:** Reject non-callable default exports at build time ([b8684d8](https://github.com/YanChenBai/veldora/commit/b8684d8))
+
+### 💅 Refactors
+
+- Rename inject to inject-script and update docs ([1be8dfe](https://github.com/YanChenBai/veldora/commit/1be8dfe))
+
+### 🏡 Chore
+
+- Upgrade CI workflows and update dependencies ([ed836cf](https://github.com/YanChenBai/veldora/commit/ed836cf))
+- Add reusable project skills ([4d262b9](https://github.com/YanChenBai/veldora/commit/4d262b9))
+- Ignore .ghfs ([71da8a1](https://github.com/YanChenBai/veldora/commit/71da8a1))
+- Format README tables ([b69597e](https://github.com/YanChenBai/veldora/commit/b69597e))
+- Format skill docs and configs ([84d4967](https://github.com/YanChenBai/veldora/commit/84d4967))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.4
 
 [compare changes](https://github.com/YanChenBai/veldora/compare/v0.0.3...v0.0.4)
