@@ -1,6 +1,6 @@
 {
   "source": "https://releases.electronjs.org/releases.json",
-  "updated": "2026-09-11",
+  "updated": "2026-10-05",
   "versions": {
     "11": {
       "electron": "11.5.0",
@@ -158,19 +158,19 @@
       "chrome": "146.0.7680.216"
     },
     "42": {
-      "electron": "42.11.3",
+      "electron": "42.11.10",
       "node": "24.19.0",
       "chrome": "148.0.7778.280"
     },
     "43": {
-      "electron": "43.7.0",
+      "electron": "43.7.7",
       "node": "24.21.0",
       "chrome": "150.0.7871.250"
     },
     "44": {
-      "electron": "44.3.0",
-      "node": "24.20.0",
-      "chrome": "152.0.7977.78"
+      "electron": "44.5.1",
+      "node": "24.21.0",
+      "chrome": "152.0.7977.130"
     }
   }
 }
