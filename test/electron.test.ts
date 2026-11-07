@@ -16,7 +16,10 @@ describe('fixed Electron compatibility targets', () => {
     ['31', 'node20.14', 'chrome126'],
     ['35', 'node22.14', 'chrome134'],
     ['41', 'node24.14', 'chrome146'],
-    ['45', 'node24.14', 'chrome146'],
+    ['42', 'node24.15', 'chrome148'],
+    ['43', 'node24.17', 'chrome150'],
+    ['44', 'node24.18', 'chrome152'],
+    ['45', 'node24.18', 'chrome152'],
     ['10', '', '']
   ])('keeps Electron %s on its fixed compatibility targets', (major, node, chrome) => {
     vi.stubEnv('ELECTRON_MAJOR_VER', major)

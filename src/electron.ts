@@ -75,6 +75,9 @@ export function getElectronNodeTarget(): string {
   // Fixed compatibility baselines: later Electron minor/patch releases may
   // bundle newer Node versions that earlier releases cannot target safely.
   const nodeVer = {
+    '44': '24.18',
+    '43': '24.17',
+    '42': '24.15',
     '41': '24.14',
     '40': '24.14',
     '39': '22.20',
@@ -108,6 +111,9 @@ export function getElectronChromeTarget(): string {
   const electronVer = getElectronMajorVer()
 
   const chromeVer = {
+    '44': '152',
+    '43': '150',
+    '42': '148',
     '41': '146',
     '40': '144',
     '39': '142',
