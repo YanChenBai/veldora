@@ -2,16 +2,9 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { builtinModules } from 'node:module'
 import colors from 'picocolors'
-import {
-  type Plugin,
-  type LibraryOptions,
-  type Rolldown,
-  type UserConfig,
-  mergeConfig,
-  normalizePath
-} from 'vite'
+import { type Plugin, type UserConfig, mergeConfig, normalizePath } from 'vite'
 import { getElectronNodeTarget, getElectronChromeTarget, supportESM } from '../electron'
-import { loadPackageData } from '../utils'
+import { loadPackageData, resolveBuildOutputs } from '../utils'
 
 export interface ElectronPluginOptions {
   root?: string
@@ -43,17 +36,6 @@ function processEnvDefine(): Record<string, string> {
     'global.process.env': `global.process.env`,
     'globalThis.process.env': `globalThis.process.env`
   }
-}
-
-function resolveBuildOutputs(
-  outputs: Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined,
-  libOptions: LibraryOptions | false
-): Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined {
-  if (libOptions && !Array.isArray(outputs)) {
-    const libFormats = libOptions.formats || []
-    return libFormats.map((format) => ({ ...outputs, format }))
-  }
-  return outputs
 }
 
 export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions): Plugin {
@@ -129,10 +111,7 @@ export function electronMainConfigPresetPlugin(options?: ElectronPluginOptions):
       // enable ssr build
       config.build.ssr = true
       config.build.ssrEmitAssets = true
-      config.ssr = {
-        ...config.ssr,
-        noExternal: true
-      }
+      config.ssr = { ...config.ssr, noExternal: true }
 
       config.build.rollupOptions = config.build.rolldownOptions
     }
@@ -166,16 +145,15 @@ export function electronMainConfigValidatorPlugin(): Plugin {
         )
       }
 
-      const resolvedOutputs = resolveBuildOutputs(rolldownOptions.output, libOptions)
+      const outputs = resolveBuildOutputs(rolldownOptions.output, libOptions)
 
-      if (resolvedOutputs) {
-        const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
+      if (outputs.length > 0) {
         if (outputs.length > 1) {
           throw new Error('The electron vite main config does not support multiple outputs.')
         } else {
-          const outpout = outputs[0]
-          if (['es', 'cjs'].includes(outpout.format || '')) {
-            if (outpout.format === 'es' && !supportESM()) {
+          const output = outputs[0]
+          if (['es', 'cjs'].includes(output.format || '')) {
+            if (output.format === 'es' && !supportESM()) {
               throw new Error(
                 'The electron vite main config output format does not support "es", ' +
                   'you can upgrade electron to the latest version or switch to "cjs" format.'
@@ -258,31 +236,21 @@ export function electronPreloadConfigPresetPlugin(options?: ElectronPluginOption
       const buildConfig = mergeConfig(defaultConfig.build, build)
       config.build = buildConfig
 
-      const resolvedOutputs = resolveBuildOutputs(
-        config.build.rolldownOptions!.output,
-        config.build.lib || false
-      )
+      const outputs = resolveBuildOutputs(config.build.rolldownOptions!.output, config.build.lib)
 
-      if (resolvedOutputs) {
-        const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
-
-        if (outputs.find(({ format }) => format === 'es')) {
-          if (Array.isArray(config.build.rolldownOptions!.output)) {
-            config.build.rolldownOptions!.output.forEach((output) => {
-              if (output.format === 'es') {
-                output['entryFileNames'] = '[name].mjs'
-                output['chunkFileNames'] = '[name]-[hash].mjs'
-              }
-            })
-          } else {
-            config.build.rolldownOptions!.output!['entryFileNames'] = '[name].mjs'
-            config.build.rolldownOptions!.output!['chunkFileNames'] = config.build.lib
-              ? '[name]-[hash].mjs'
-              : path.posix.join(
-                  build.assetsDir || defaultConfig.build.assetsDir,
-                  '[name]-[hash].mjs'
-                )
-          }
+      if (outputs.some(({ format }) => format === 'es')) {
+        if (Array.isArray(config.build.rolldownOptions!.output)) {
+          config.build.rolldownOptions!.output.forEach((output) => {
+            if (output.format === 'es') {
+              output['entryFileNames'] = '[name].mjs'
+              output['chunkFileNames'] = '[name]-[hash].mjs'
+            }
+          })
+        } else {
+          config.build.rolldownOptions!.output!['entryFileNames'] = '[name].mjs'
+          config.build.rolldownOptions!.output!['chunkFileNames'] = config.build.lib
+            ? '[name]-[hash].mjs'
+            : path.posix.join(build.assetsDir || defaultConfig.build.assetsDir, '[name]-[hash].mjs')
         }
       }
 
@@ -334,16 +302,15 @@ export function electronPreloadConfigValidatorPlugin(): Plugin {
         )
       }
 
-      const resolvedOutputs = resolveBuildOutputs(rolldownOptions.output, libOptions)
+      const outputs = resolveBuildOutputs(rolldownOptions.output, libOptions)
 
-      if (resolvedOutputs) {
-        const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
+      if (outputs.length > 0) {
         if (outputs.length > 1) {
           throw new Error('The electron vite preload config does not support multiple outputs.')
         } else {
-          const outpout = outputs[0]
-          if (['es', 'cjs'].includes(outpout.format || '')) {
-            if (outpout.format === 'es' && !supportESM()) {
+          const output = outputs[0]
+          if (['es', 'cjs'].includes(output.format || '')) {
+            if (output.format === 'es' && !supportESM()) {
               throw new Error(
                 'The electron vite preload config output format does not support "es", ' +
                   'you can upgrade electron to the latest version or switch to "cjs" format.'

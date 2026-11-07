@@ -30,21 +30,6 @@ const __dirname = import.meta.dirname;
 const require = __cjs_mod__.createRequire(import.meta.url);
 `
 
-const ESMStaticImportRe =
-  /(?<=\s|^|;)import\s*([\s"']*(?<imports>[\p{L}\p{M}\w\t\n\r $*,/{}@.]+)from\s*)?["']\s*(?<specifier>(?<="\s*)[^"]*[^\s"](?=\s*")|(?<='\s*)[^']*[^\s'](?=\s*'))\s*["'][\s;]*/gmu
-
-interface StaticImport {
-  end: number
-}
-
-function findStaticImports(code: string): StaticImport[] {
-  const matches: StaticImport[] = []
-  for (const match of code.matchAll(ESMStaticImportRe)) {
-    matches.push({ end: (match.index || 0) + match[0].length })
-  }
-  return matches
-}
-
 export default function esmShimPlugin(): Plugin {
   const CJSShim = supportImportMetaPaths() ? CJSShim_node_20_11 : CJSShim_normal
 
@@ -62,7 +47,9 @@ export default function esmShimPlugin(): Plugin {
           return null
         }
 
-        const lastESMImport = findStaticImports(code).pop()
+        const lastESMImport = this.parse(code)
+          .body.filter((node) => node.type === 'ImportDeclaration')
+          .pop()
         const indexToAppend = lastESMImport ? lastESMImport.end : 0
         const s = new MagicString(code)
         s.appendRight(indexToAppend, CJSShim)

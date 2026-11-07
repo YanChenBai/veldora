@@ -7,8 +7,27 @@ import {
   isFilePathESM,
   isObject,
   resolveHostname,
+  resolveBuildOutputs,
   toRelativePath
 } from '../src/utils'
+
+describe('resolveBuildOutputs', () => {
+  it('normalizes explicit and library outputs', () => {
+    expect(resolveBuildOutputs({ format: 'cjs' }, false)).toEqual([{ format: 'cjs' }])
+    expect(resolveBuildOutputs(undefined, false)).toEqual([])
+    expect(
+      resolveBuildOutputs(
+        { entryFileNames: '[name].js' },
+        { entry: 'index.ts', formats: ['es', 'cjs'] }
+      )
+    ).toEqual([
+      { entryFileNames: '[name].js', format: 'es' },
+      { entryFileNames: '[name].js', format: 'cjs' }
+    ])
+    const outputs = [{ format: 'es' as const }, { format: 'cjs' as const }]
+    expect(resolveBuildOutputs(outputs, { entry: 'index.ts', formats: ['es'] })).toBe(outputs)
+  })
+})
 
 describe('isObject', () => {
   it('returns true for plain objects', () => {
