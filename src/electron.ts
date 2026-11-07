@@ -184,12 +184,14 @@ export function startElectron(
   if (filterConsole && ps.stdout && ps.stderr) {
     const stdoutDrained = pipeFilteredOutput(ps.stdout, process.stdout, filterConsole)
     const stderrDrained = pipeFilteredOutput(ps.stderr, process.stderr, filterConsole)
-    ps.on('close', (code) => {
-      Promise.all([stdoutDrained, stderrDrained]).then(() => process.exit(code ?? 0))
+    ps.on('close', (code, signal) => {
+      Promise.all([stdoutDrained, stderrDrained]).then(() => process.exit(code ?? (signal ? 1 : 0)))
     })
   } else {
-    ps.on('close', process.exit)
+    ps.on('close', (code, signal) => process.exit(code ?? (signal ? 1 : 0)))
   }
+
+  setupElectronSignalHandlers(ps)
 
   return ps
 }
@@ -263,4 +265,30 @@ export function filterConsoleOutput(
     }
   }
   return { buffer: text, output }
+}
+
+let electronPs: ChildProcess | undefined
+let signalHandlersRegistered = false
+
+function setupElectronSignalHandlers(child: ChildProcess): void {
+  electronPs = child
+
+  if (signalHandlersRegistered) return
+
+  const signals: NodeJS.Signals[] =
+    process.platform === 'win32'
+      ? ['SIGINT', 'SIGTERM']
+      : ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGUSR2']
+
+  for (const signal of signals) {
+    process.on(signal, () => {
+      const child = electronPs
+      if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return
+
+      // A previously sent signal does not mean the child has exited.
+      child.kill(signal)
+    })
+  }
+
+  signalHandlersRegistered = true
 }
