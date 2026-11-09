@@ -3,7 +3,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import { createHash } from 'node:crypto'
 import { createRequire } from 'node:module'
-import { loadEnv as viteLoadEnv } from 'vite'
+import { type LibraryOptions, type Rolldown, loadEnv as viteLoadEnv } from 'vite'
 
 export function isObject(value: unknown): value is Record<string, unknown> {
   return Object.prototype.toString.call(value) === '[object Object]'
@@ -121,4 +121,74 @@ export async function asyncFlatten<T extends unknown[]>(arr: T): Promise<AsyncFl
     arr = (await Promise.all(arr)).flat(Infinity) as any
   } while (arr.some((v: any) => v?.then))
   return arr as unknown[] as AsyncFlatten<T>
+}
+
+/**
+ * Resolve configured build outputs into an array.
+ */
+export function resolveBuildOutputs(
+  outputs: Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined,
+  libOptions: LibraryOptions | false | undefined
+): Rolldown.OutputOptions[] {
+  if (Array.isArray(outputs)) {
+    return outputs
+  }
+  if (libOptions) {
+    const libFormats = libOptions.formats || []
+    return libFormats.map((format) => ({ ...outputs, format }))
+  }
+  return outputs ? [outputs] : []
+}
+
+/**
+ * Isolate configuration data without cloning plugins or runtime instances.
+ * Plugins may capture their own object in hooks, so their identity must survive.
+ */
+export function cloneConfig<T>(config: T): T {
+  const seen = new WeakMap<object, unknown>()
+  const pluginArrays = new WeakMap<object, unknown>()
+
+  function clone(value: unknown, plugins = false): unknown {
+    if (value === null || typeof value !== 'object') return value
+
+    const cache = plugins ? pluginArrays : seen
+    if (cache.has(value)) return cache.get(value)
+
+    if (Array.isArray(value)) {
+      const result: unknown[] = Array.from({ length: value.length })
+      cache.set(value, result)
+      value.forEach((item, index) => {
+        result[index] = clone(item, plugins)
+      })
+      return result
+    }
+
+    // Preserve plugin objects, promises and other opaque plugin options.
+    if (plugins) return value
+
+    if (value instanceof RegExp) {
+      const result = new RegExp(value)
+      result.lastIndex = value.lastIndex
+      cache.set(value, result)
+      return result
+    }
+
+    const prototype = Object.getPrototypeOf(value)
+    if (prototype !== Object.prototype && prototype !== null) return value
+
+    const result = Object.create(prototype) as Record<PropertyKey, unknown>
+    cache.set(value, result)
+    for (const key of Reflect.ownKeys(value)) {
+      if (!Object.prototype.propertyIsEnumerable.call(value, key)) continue
+      Object.defineProperty(result, key, {
+        value: clone((value as Record<PropertyKey, unknown>)[key], key === 'plugins'),
+        enumerable: true,
+        configurable: true,
+        writable: true
+      })
+    }
+    return result
+  }
+
+  return clone(config) as T
 }

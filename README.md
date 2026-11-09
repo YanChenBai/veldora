@@ -239,6 +239,10 @@ export default defineConfig({
 
 ### V8 bytecode
 
+Bytecode compilation reuses one Electron process per build and compiles main and preload code in their corresponding Electron environments. `build.bytecode.chunkAlias` accepts a chunk name, an array of names, or a `RegExp`.
+
+The bytecode format has changed to match electron-vite v6. Rebuild all bytecode output and its loader together; existing `.jsc` / `.cjsc` files are not compatible with the new loader.
+
 ```ts
 import { defineConfig } from 'veldorajs'
 

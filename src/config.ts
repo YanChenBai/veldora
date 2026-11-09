@@ -5,6 +5,7 @@ import {
   type UserConfig as ViteConfig,
   type ConfigEnv,
   type PluginOption,
+  type Plugin,
   type BuildEnvironmentOptions as ViteBuildOptions,
   type LogLevel,
   createLogger,
@@ -30,7 +31,7 @@ import modulePathPlugin from './plugins/modulePath'
 import isolateEntriesPlugin from './plugins/isolateEntries'
 import { type ExternalOptions, externalizeDepsPlugin } from './plugins/externalizeDeps'
 import { type BytecodeOptions, bytecodePlugin } from './plugins/bytecode'
-import { deepClone } from './utils'
+import { cloneConfig, asyncFlatten } from './utils'
 
 export { defineConfig as defineViteConfig } from 'vite'
 
@@ -314,7 +315,10 @@ export abstract class ConfigFactory<
 
   async build(cleanMode?: boolean): Promise<T> {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    const config = mergeConfig(deepClone(this.baseConfig) as any, deepClone(this.inlineConfig)) as T
+    const config = mergeConfig(
+      cloneConfig(this.baseConfig) as any,
+      cloneConfig(this.inlineConfig)
+    ) as T
 
     config.mode = this.inlineConfig.mode || config.mode || process.env.NODE_ENV
 
@@ -433,23 +437,31 @@ function resetOutDir(config: ViteConfig, outDir: string, subOutDir: string): voi
 async function resolveConfigDrivenPlugins(
   config: MainViteConfig | PreloadViteConfig
 ): Promise<PluginOption[]> {
+  const userPlugins = (await asyncFlatten(config.plugins || [])).filter(Boolean) as Plugin[]
+
   const configDrivenPlugins: PluginOption[] = []
 
-  const externalOptions = config.build?.externalizeDeps ?? true
-  if (externalOptions) {
-    if (isOptions<ExternalOptions>(externalOptions)) {
-      configDrivenPlugins.push(externalizeDepsPlugin(externalOptions))
-    } else {
-      configDrivenPlugins.push(externalizeDepsPlugin())
+  const hasExternalizeDepsPlugin = userPlugins.some((p) => p.name === 'vite:externalize-deps')
+  if (!hasExternalizeDepsPlugin) {
+    const externalOptions = config.build?.externalizeDeps ?? true
+    if (externalOptions) {
+      configDrivenPlugins.push(
+        isOptions<ExternalOptions>(externalOptions)
+          ? externalizeDepsPlugin(externalOptions)
+          : externalizeDepsPlugin()
+      )
     }
   }
 
-  const bytecodeOptions = config.build?.bytecode
-  if (bytecodeOptions) {
-    if (isOptions<BytecodeOptions>(bytecodeOptions)) {
-      configDrivenPlugins.push(bytecodePlugin(bytecodeOptions))
-    } else {
-      configDrivenPlugins.push(bytecodePlugin())
+  const hasBytecodePlugin = userPlugins.some((p) => p.name === 'vite:bytecode')
+  if (!hasBytecodePlugin) {
+    const bytecodeOptions = config.build?.bytecode
+    if (bytecodeOptions) {
+      configDrivenPlugins.push(
+        isOptions<BytecodeOptions>(bytecodeOptions)
+          ? bytecodePlugin(bytecodeOptions)
+          : bytecodePlugin()
+      )
     }
   }
 

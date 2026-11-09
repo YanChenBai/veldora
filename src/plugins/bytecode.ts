@@ -1,152 +1,84 @@
 import path from 'node:path'
-import { spawn } from 'node:child_process'
+import { randomBytes } from 'node:crypto'
 import { createRequire } from 'node:module'
 import colors from 'picocolors'
-import { type Plugin, type LibraryOptions, type Rolldown, normalizePath } from 'vite'
-import * as babel from '@babel/core'
+import { type Plugin, type Rolldown, normalizePath } from 'vite'
+import type * as Babel from '@babel/core'
 import MagicString from 'magic-string'
-import { getElectronPath } from '../electron'
-import { toRelativePath } from '../utils'
+import { toRelativePath, resolveBuildOutputs } from '../utils'
+import type { BytecodeCompiler, BytecodeTarget } from '../bytecodeCompiler'
 
 // Inspired by https://github.com/bytenode/bytenode
 
-const _require = createRequire(import.meta.url)
+const require = createRequire(import.meta.url)
+let babel: typeof Babel | undefined
 
-function getBytecodeCompilerPath(): string {
-  return path.join(
-    path.dirname(_require.resolve('veldorajs/package.json')),
-    'bin',
-    'veldora-bytecode.cjs'
-  )
+function getBytecodeCompiler(plugins: readonly Plugin[]): BytecodeCompiler | undefined {
+  const plugin = plugins.find((plugin) => plugin.name === 'vite:veldora-bytecode-build')
+  return (plugin?.api as { compiler?: BytecodeCompiler } | undefined)?.compiler
 }
 
-function compileToBytecode(code: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    let data = Buffer.from([])
-
-    const electronPath = getElectronPath()
-    const bytecodePath = getBytecodeCompilerPath()
-
-    const proc = spawn(electronPath, [bytecodePath], {
-      env: { ELECTRON_RUN_AS_NODE: '1' },
-      stdio: ['pipe', 'pipe', 'pipe', 'ipc']
-    })
-
-    if (proc.stdin) {
-      proc.stdin.write(code)
-      proc.stdin.end()
-    }
-
-    if (proc.stdout) {
-      proc.stdout.on('data', (chunk) => {
-        data = Buffer.concat([data, chunk])
-      })
-      proc.stdout.on('error', (err) => {
-        console.error(err)
-      })
-      proc.stdout.on('end', () => {
-        resolve(data)
-      })
-    }
-
-    if (proc.stderr) {
-      proc.stderr.on('data', (chunk) => {
-        console.error('Error: ', chunk.toString())
-      })
-      proc.stderr.on('error', (err) => {
-        console.error('Error: ', err)
-      })
-    }
-
-    proc.addListener('message', (message) => console.log(message))
-    proc.addListener('error', (err) => console.error(err))
-
-    proc.on('error', (err) => reject(err))
-    proc.on('exit', () => {
-      resolve(data)
-    })
-  })
+// Versioned envelope: magic/version (8), UTF-16 source length (4), module ID (16), V8 cache.
+// Keep our metadata separate from the private V8 cache header.
+async function compileToBytecode(
+  compiler: BytecodeCompiler,
+  target: BytecodeTarget,
+  code: string
+): Promise<Buffer> {
+  const id = randomBytes(16)
+  // Reserve enough source space for an untruncated, per-artifact placeholder identity.
+  const source = code + '\n/*' + id.toString('hex') + '*/'
+  const result = await compiler.compile(target, source)
+  const header = Buffer.alloc(28)
+  header.write('EVBC0001', 0, 'ascii')
+  header.writeUInt32LE(result.sourceLength, 8)
+  id.copy(header, 12)
+  return Buffer.concat([header, Buffer.from(result.cachedData, 'base64')])
 }
 
 const bytecodeModuleLoaderCode = [
-  `"use strict";`,
-  `const fs = require("fs");`,
-  `const path = require("path");`,
-  `const vm = require("vm");`,
-  `const v8 = require("v8");`,
-  `const Module = require("module");`,
-  `v8.setFlagsFromString("--no-lazy");`,
-  `v8.setFlagsFromString("--no-flush-bytecode");`,
-  `const FLAG_HASH_OFFSET = 12;`,
-  `const SOURCE_HASH_OFFSET = 8;`,
-  `let dummyBytecode;`,
-  `function setFlagHashHeader(bytecodeBuffer) {`,
-  `  if (!dummyBytecode) {`,
-  `    const script = new vm.Script("", {`,
-  `      produceCachedData: true`,
-  `    });`,
-  `    dummyBytecode = script.createCachedData();`,
-  `  }`,
-  `  dummyBytecode.slice(FLAG_HASH_OFFSET, FLAG_HASH_OFFSET + 4).copy(bytecodeBuffer, FLAG_HASH_OFFSET);`,
-  `};`,
-  `function getSourceHashHeader(bytecodeBuffer) {`,
-  `  return bytecodeBuffer.slice(SOURCE_HASH_OFFSET, SOURCE_HASH_OFFSET + 4);`,
-  `};`,
-  `function buffer2Number(buffer) {`,
-  `  let ret = 0;`,
-  `  ret |= buffer[3] << 24;`,
-  `  ret |= buffer[2] << 16;`,
-  `  ret |= buffer[1] << 8;`,
-  `  ret |= buffer[0];`,
-  `  return ret;`,
-  `};`,
-  `Module._extensions[".jsc"] = Module._extensions[".cjsc"] = function (module, filename) {`,
-  `  const bytecodeBuffer = fs.readFileSync(filename);`,
-  `  if (!Buffer.isBuffer(bytecodeBuffer)) {`,
-  `    throw new Error("BytecodeBuffer must be a buffer object.");`,
-  `  }`,
-  `  setFlagHashHeader(bytecodeBuffer);`,
-  `  const length = buffer2Number(getSourceHashHeader(bytecodeBuffer));`,
-  `  let dummyCode = "";`,
-  `  if (length > 1) {`,
-  `    dummyCode = "\\"" + "\\u200b".repeat(length - 2) + "\\"";`,
-  `  }`,
-  `  const script = new vm.Script(dummyCode, {`,
-  `    filename: filename,`,
-  `    lineOffset: 0,`,
-  `    displayErrors: true,`,
-  `    cachedData: bytecodeBuffer`,
-  `  });`,
-  `  if (script.cachedDataRejected) {`,
-  `    throw new Error("Invalid or incompatible cached data (cachedDataRejected)");`,
-  `  }`,
-  `  const require = function (id) {`,
-  `    return module.require(id);`,
-  `  };`,
-  `  require.resolve = function (request, options) {`,
-  `    return Module._resolveFilename(request, module, false, options);`,
-  `  };`,
-  `  if (process.mainModule) {`,
-  `    require.main = process.mainModule;`,
-  `  }`,
-  `  require.extensions = Module._extensions;`,
-  `  require.cache = Module._cache;`,
-  `  const compiledWrapper = script.runInThisContext({`,
-  `    filename: filename,`,
-  `    lineOffset: 0,`,
-  `    columnOffset: 0,`,
-  `    displayErrors: true`,
-  `  });`,
-  `  const dirname = path.dirname(filename);`,
-  `  const args = [module.exports, require, module, filename, dirname, process, global];`,
-  `  return compiledWrapper.apply(module.exports, args);`,
-  `};`
+  '"use strict";',
+  'const fs = require("node:fs");',
+  'const path = require("node:path");',
+  'const vm = require("node:vm");',
+  'const v8 = require("node:v8");',
+  'const Module = require("node:module");',
+  'v8.setFlagsFromString("--no-lazy");',
+  'v8.setFlagsFromString("--no-flush-bytecode");',
+  'const params = ["exports", "require", "module", "__filename", "__dirname"];',
+  'Module._extensions[".jsc"] = Module._extensions[".cjsc"] = function (module, filename) {',
+  '  const data = fs.readFileSync(filename);',
+  '  if (data.length <= 28 || data.toString("ascii", 0, 8) !== "EVBC0001") {',
+  '    throw new Error("Invalid Veldora bytecode format; rebuild the application: " + filename);',
+  '  }',
+  '  const length = data.readUInt32LE(8);',
+  '  const tag = "/*" + data.subarray(12, 28).toString("hex") + "*/";',
+  '  if (length < tag.length || length > 0x1fffffff) {',
+  '    throw new Error("Invalid bytecode source length: " + filename);',
+  '  }',
+  '  const placeholder = tag + " ".repeat(length - tag.length);',
+  '  const compiledWrapper = vm.compileFunction(placeholder, params, {',
+  '    filename,',
+  '    cachedData: data.subarray(28)',
+  '  });',
+  '  if (compiledWrapper.cachedDataRejected) {',
+  '    throw new Error("Invalid or incompatible cached data (cachedDataRejected): " + filename);',
+  '  }',
+  '  const require = function (id) { return module.require(id); };',
+  '  require.resolve = function (request, options) {',
+  '    return Module._resolveFilename(request, module, false, options);',
+  '  };',
+  '  if (process.mainModule) require.main = process.mainModule;',
+  '  require.extensions = Module._extensions;',
+  '  require.cache = Module._cache;',
+  '  return compiledWrapper.call(module.exports, module.exports, require, module, filename, path.dirname(filename));',
+  '};'
 ]
 
 const bytecodeChunkExtensionRE = /.(jsc|cjsc)$/
 
 export interface BytecodeOptions {
-  chunkAlias?: string | string[]
+  chunkAlias?: string | string[] | RegExp
   transformArrowFunctions?: boolean
   removeBundleJS?: boolean
   protectedStrings?: string[]
@@ -154,6 +86,8 @@ export interface BytecodeOptions {
 
 /**
  * Compile source code to v8 bytecode.
+ *
+ * @deprecated use `build.bytecode` config option instead
  */
 export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   if (process.env.NODE_ENV_ELECTRON_VITE !== 'production') {
@@ -166,21 +100,32 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     removeBundleJS = true,
     protectedStrings = []
   } = options
-  const _chunkAlias = Array.isArray(chunkAlias) ? chunkAlias : [chunkAlias]
+  const _chunkAlias =
+    chunkAlias instanceof RegExp
+      ? chunkAlias
+      : Array.isArray(chunkAlias)
+        ? chunkAlias
+        : [chunkAlias]
 
-  const transformAllChunks = _chunkAlias.length === 0
   const isBytecodeChunk = (chunkName: string): boolean => {
-    return transformAllChunks || _chunkAlias.some((alias) => alias === chunkName)
+    if (_chunkAlias instanceof RegExp) {
+      _chunkAlias.lastIndex = 0
+      return _chunkAlias.test(chunkName)
+    }
+    return _chunkAlias.length === 0 || _chunkAlias.some((alias) => alias === chunkName)
   }
 
-  const plugins: babel.PluginItem[] = []
+  const plugins: Babel.PluginItem[] = []
 
   if (transformArrowFunctions) {
     plugins.push('@babel/plugin-transform-arrow-functions')
   }
 
   if (protectedStrings.length > 0) {
-    plugins.push([protectStringsPlugin, { protectedStrings: new Set(protectedStrings) }])
+    plugins.push([
+      protectStringsPlugin as Babel.PluginTarget,
+      { protectedStrings: new Set(protectedStrings) }
+    ])
   }
 
   const shouldTransformBytecodeChunk = plugins.length !== 0
@@ -189,35 +134,39 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
     code: string,
     sourceMaps: boolean = false
   ): { code: string; map?: Rolldown.SourceMapInput } | null => {
-    const re = babel.transform(code, { plugins, sourceMaps })
-    return re ? { code: re.code || '', map: re.map } : null
+    babel ??= require('@babel/core') as typeof Babel
+    const re = babel.transformSync(code, { plugins, sourceMaps })
+    return re ? { code: re.code || '', map: re.map as Rolldown.SourceMapInput } : null
   }
 
   const useStrict = '"use strict";'
   const bytecodeModuleLoader = 'bytecode-loader.cjs'
 
   let supported = false
+  let isPreload = false
+  let bytecodeCompiler: BytecodeCompiler | undefined
 
   return {
     name: 'vite:bytecode',
     apply: 'build',
     enforce: 'post',
     configResolved(config): void {
+      bytecodeCompiler = getBytecodeCompiler(config.plugins)
       if (supported) {
         return
       }
+      isPreload = config.plugins.some((p) => p.name === 'vite:electron-preload-config-preset')
       const useInRenderer = config.plugins.some(
-        (p) => p.name === 'vite:electron-renderer-preset-config'
+        (p) => p.name === 'vite:electron-renderer-config-preset'
       )
       if (useInRenderer) {
         config.logger.warn(colors.yellow('bytecodePlugin does not support renderer.'))
         return
       }
       const build = config.build
-      const resolvedOutputs = resolveBuildOutputs(build.rolldownOptions.output, build.lib)
-      if (resolvedOutputs) {
-        const outputs = Array.isArray(resolvedOutputs) ? resolvedOutputs : [resolvedOutputs]
-        const output = outputs[0]
+      const outputs = resolveBuildOutputs(build.rolldownOptions.output, build.lib)
+      const output = outputs[0]
+      if (output) {
         if (output.format === 'es') {
           config.logger.warn(
             colors.yellow(
@@ -268,77 +217,83 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
 
       const bundles = Object.keys(output)
 
-      await Promise.all(
-        bundles.map(async (name) => {
-          const chunk = output[name]
-          if (chunk.type === 'chunk') {
-            let _code = chunk.code
-            if (bytecodeRE) {
-              let match: RegExpExecArray | null
-              let s: MagicString | undefined
-              while ((match = bytecodeRE.exec(_code))) {
-                s ||= new MagicString(_code)
-                const [prefix, chunkName] = match
-                const len = prefix.length + chunkName.length
-                s.overwrite(match.index, match.index + len, prefix + chunkName + 'c', {
-                  contentOnly: true
-                })
-              }
-              if (s) {
-                _code = s.toString()
-              }
-            }
-            if (bytecodeChunks.includes(name)) {
-              const bytecodeBuffer = await compileToBytecode(_code)
-              this.emitFile({
-                type: 'asset',
-                fileName: name + 'c',
-                source: bytecodeBuffer
+      if (!bytecodeCompiler) {
+        throw new Error('Bytecode compilation requires a Veldora build')
+      }
+      for (const name of bundles) {
+        const chunk = output[name]
+        if (chunk.type === 'chunk') {
+          let _code = chunk.code
+          if (bytecodeRE) {
+            let match: RegExpExecArray | null
+            let s: MagicString | undefined
+            while ((match = bytecodeRE.exec(_code))) {
+              s ||= new MagicString(_code)
+              const [prefix, chunkName] = match
+              const len = prefix.length + chunkName.length
+              s.overwrite(match.index, match.index + len, prefix + chunkName + 'c', {
+                contentOnly: true
               })
-              if (!removeBundleJS) {
-                this.emitFile({
-                  type: 'asset',
-                  fileName: '_' + chunk.fileName,
-                  source: chunk.code
-                })
-              }
-              if (chunk.isEntry) {
-                const bytecodeLoaderBlock = getBytecodeLoaderBlock(chunk.fileName)
-                const bytecodeModuleBlock = `require("./${path.basename(name) + 'c'}");`
-                const code = `${useStrict}\n${bytecodeLoaderBlock}\n${bytecodeModuleBlock}\n`
-                chunk.code = code
-              } else {
-                delete output[chunk.fileName]
-              }
-              bytecodeChunkCount += 1
-            } else {
-              if (chunk.isEntry) {
-                let hasBytecodeMoudle = false
-                const idsToHandle = new Set([...chunk.imports, ...chunk.dynamicImports])
-                for (const moduleId of idsToHandle) {
-                  if (bytecodeChunks.includes(moduleId)) {
-                    hasBytecodeMoudle = true
-                    break
-                  }
-                  const moduleInfo = this.getModuleInfo(moduleId)
-                  if (moduleInfo) {
-                    const { importers, dynamicImporters } = moduleInfo
-                    for (const importerId of importers) idsToHandle.add(importerId)
-                    for (const importerId of dynamicImporters) idsToHandle.add(importerId)
-                  }
-                }
-                _code = hasBytecodeMoudle
-                  ? _code.replace(
-                      /("use strict";)|('use strict';)/,
-                      `${useStrict}\n${getBytecodeLoaderBlock(chunk.fileName)}`
-                    )
-                  : _code
-              }
-              chunk.code = _code
+            }
+            if (s) {
+              _code = s.toString()
             }
           }
-        })
-      )
+          if (bytecodeChunks.includes(name)) {
+            const bytecodeBuffer = await compileToBytecode(
+              bytecodeCompiler,
+              isPreload ? 'preload' : 'main',
+              _code
+            )
+            this.emitFile({
+              type: 'asset',
+              fileName: name + 'c',
+              source: bytecodeBuffer
+            })
+            if (!removeBundleJS) {
+              this.emitFile({
+                type: 'asset',
+                fileName: '_' + chunk.fileName,
+                source: chunk.code
+              })
+            }
+            if (chunk.isEntry) {
+              const bytecodeLoaderBlock = getBytecodeLoaderBlock(chunk.fileName)
+              const bytecodeModuleBlock = `require("./${path.basename(name) + 'c'}");`
+              const code = `${useStrict}\n${bytecodeLoaderBlock}\n${bytecodeModuleBlock}\n`
+              chunk.code = code
+            } else {
+              delete output[chunk.fileName]
+            }
+            bytecodeChunkCount += 1
+          } else {
+            if (chunk.isEntry) {
+              let hasBytecodeMoudle = false
+              const idsToHandle = new Set([...chunk.imports, ...chunk.dynamicImports])
+              for (const moduleId of idsToHandle) {
+                if (bytecodeChunks.includes(moduleId)) {
+                  hasBytecodeMoudle = true
+                  break
+                }
+                const moduleInfo = this.getModuleInfo(moduleId)
+                if (moduleInfo) {
+                  const { importers, dynamicImporters } = moduleInfo
+                  for (const importerId of importers) idsToHandle.add(importerId)
+                  for (const importerId of dynamicImporters) idsToHandle.add(importerId)
+                }
+              }
+              if (hasBytecodeMoudle) {
+                const loader = getBytecodeLoaderBlock(chunk.fileName)
+                const strictRE = /^(#![^\n]*\n)?(["'])use strict\2;/
+                _code = strictRE.test(_code)
+                  ? _code.replace(strictRE, `$&\n${loader}`)
+                  : _code.replace(/^(#![^\n]*\n)?/, `$&${loader}\n`)
+              }
+            }
+            chunk.code = _code
+          }
+        }
+      }
 
       if (
         bytecodeChunkCount &&
@@ -365,27 +320,16 @@ export function bytecodePlugin(options: BytecodeOptions = {}): Plugin | null {
   }
 }
 
-function resolveBuildOutputs(
-  outputs: Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined,
-  libOptions: LibraryOptions | false
-): Rolldown.OutputOptions | Rolldown.OutputOptions[] | undefined {
-  if (libOptions && !Array.isArray(outputs)) {
-    const libFormats = libOptions.formats || []
-    return libFormats.map((format) => ({ ...outputs, format }))
-  }
-  return outputs
-}
-
-interface ProtectStringsPluginState extends babel.PluginPass {
+interface ProtectStringsPluginState extends Babel.PluginPass {
   opts: { protectedStrings: Set<string> }
 }
 
 function protectStringsPlugin(
-  api: typeof babel & babel.ConfigAPI
-): babel.PluginObj<ProtectStringsPluginState> {
+  api: typeof Babel & Babel.ConfigAPI
+): Babel.PluginObj<ProtectStringsPluginState> {
   const { types: t } = api
 
-  function createFromCharCodeFunction(value: string): babel.types.CallExpression {
+  function createFromCharCodeFunction(value: string): Babel.types.CallExpression {
     const charCodes = Array.from(value).map((s) => s.charCodeAt(0))
     const charCodeLiterals = charCodes.map((code) => t.numericLiteral(code))
 

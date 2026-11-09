@@ -5,7 +5,6 @@ import { type ChildProcess, spawn } from 'node:child_process'
 import type { Readable, Writable } from 'node:stream'
 import type { ConsoleFilter } from './config'
 import { loadPackageData } from './utils'
-import electronVersions from './electronVersions.json'
 
 const _require = createRequire(import.meta.url)
 
@@ -70,45 +69,78 @@ export function getElectronPath(): string {
   return electronExecPath
 }
 
-interface ElectronVersionEntry {
-  electron: string
-  node: string
-  chrome: string
-}
-
-const electronVersionMap: Record<string, ElectronVersionEntry> = electronVersions.versions
-
-/**
- * Resolve the Node.js and Chromium versions bundled with the installed Electron
- * major from `electronVersions.json`, which is refreshed from the official
- * release feed by `scripts/updateElectronVersions.mjs`.
- *
- * An Electron newer than the checked-in data falls back to the newest known
- * entry: slightly conservative, but always a valid build target.
- */
-const resolveElectronVersion = (): ElectronVersionEntry | undefined => {
-  const electronVer = getElectronMajorVer()
-  if (!electronVer || parseInt(electronVer) <= 10) return undefined
-
-  const major = parseInt(electronVer)
-  if (!Number.isNaN(major)) {
-    const entry = electronVersionMap[String(major)]
-    if (entry) return entry
-  }
-
-  const known = Object.keys(electronVersionMap).map(Number)
-  if (!known.length) return undefined
-  return electronVersionMap[String(Math.max(...known))]
-}
-
 export function getElectronNodeTarget(): string {
-  const entry = resolveElectronVersion()
-  return entry ? 'node' + entry.node.split('.').slice(0, 2).join('.') : ''
+  const electronVer = getElectronMajorVer()
+
+  // Fixed compatibility baselines: later Electron minor/patch releases may
+  // bundle newer Node versions that earlier releases cannot target safely.
+  const nodeVer = {
+    '44': '24.18',
+    '43': '24.17',
+    '42': '24.15',
+    '41': '24.14',
+    '40': '24.14',
+    '39': '22.20',
+    '38': '22.19',
+    '37': '22.16',
+    '36': '22.14',
+    '35': '22.14',
+    '34': '20.18',
+    '33': '20.18',
+    '32': '20.16',
+    '31': '20.14',
+    '30': '20.11',
+    '29': '20.9',
+    '28': '18.18',
+    '27': '18.17',
+    '26': '18.16',
+    '25': '18.15',
+    '24': '18.14',
+    '23': '18.12',
+    '22': '16.17'
+  }
+  if (electronVer && parseInt(electronVer) > 10) {
+    let target = nodeVer[electronVer]
+    if (!target) target = Object.values(nodeVer).reverse()[0]
+    return 'node' + target
+  }
+  return ''
 }
 
 export function getElectronChromeTarget(): string {
-  const entry = resolveElectronVersion()
-  return entry ? 'chrome' + entry.chrome.split('.')[0] : ''
+  const electronVer = getElectronMajorVer()
+
+  const chromeVer = {
+    '44': '152',
+    '43': '150',
+    '42': '148',
+    '41': '146',
+    '40': '144',
+    '39': '142',
+    '38': '140',
+    '37': '138',
+    '36': '136',
+    '35': '134',
+    '34': '132',
+    '33': '130',
+    '32': '128',
+    '31': '126',
+    '30': '124',
+    '29': '122',
+    '28': '120',
+    '27': '118',
+    '26': '116',
+    '25': '114',
+    '24': '112',
+    '23': '110',
+    '22': '108'
+  }
+  if (electronVer && parseInt(electronVer) > 10) {
+    let target = chromeVer[electronVer]
+    if (!target) target = Object.values(chromeVer).reverse()[0]
+    return 'chrome' + target
+  }
+  return ''
 }
 
 export function startElectron(
@@ -152,12 +184,14 @@ export function startElectron(
   if (filterConsole && ps.stdout && ps.stderr) {
     const stdoutDrained = pipeFilteredOutput(ps.stdout, process.stdout, filterConsole)
     const stderrDrained = pipeFilteredOutput(ps.stderr, process.stderr, filterConsole)
-    ps.on('close', (code) => {
-      Promise.all([stdoutDrained, stderrDrained]).then(() => process.exit(code ?? 0))
+    ps.on('close', (code, signal) => {
+      Promise.all([stdoutDrained, stderrDrained]).then(() => process.exit(code ?? (signal ? 1 : 0)))
     })
   } else {
-    ps.on('close', process.exit)
+    ps.on('close', (code, signal) => process.exit(code ?? (signal ? 1 : 0)))
   }
+
+  setupElectronSignalHandlers(ps)
 
   return ps
 }
@@ -231,4 +265,30 @@ export function filterConsoleOutput(
     }
   }
   return { buffer: text, output }
+}
+
+let electronPs: ChildProcess | undefined
+let signalHandlersRegistered = false
+
+function setupElectronSignalHandlers(child: ChildProcess): void {
+  electronPs = child
+
+  if (signalHandlersRegistered) return
+
+  const signals: NodeJS.Signals[] =
+    process.platform === 'win32'
+      ? ['SIGINT', 'SIGTERM']
+      : ['SIGINT', 'SIGTERM', 'SIGHUP', 'SIGUSR2']
+
+  for (const signal of signals) {
+    process.on(signal, () => {
+      const child = electronPs
+      if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return
+
+      // A previously sent signal does not mean the child has exited.
+      child.kill(signal)
+    })
+  }
+
+  signalHandlersRegistered = true
 }
