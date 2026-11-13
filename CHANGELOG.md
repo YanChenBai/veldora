@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.0.6
+
+[compare changes](https://github.com/YanChenBai/veldora/compare/v0.0.5...v0.0.6)
+
+### 🚀 Enhancements
+
+- **electron:** Add fixed targets for Electron 42 through 44 ([e5e19aa](https://github.com/YanChenBai/veldora/commit/e5e19aa))
+- **bytecode:** Share an Electron compiler across build targets ([8ad3b96](https://github.com/YanChenBai/veldora/commit/8ad3b96))
+
+### 🩹 Fixes
+
+- **electron:** Restore fixed compatibility targets ([e80bb1f](https://github.com/YanChenBai/veldora/commit/e80bb1f))
+- **plugins:** Sync upstream asset and output handling fixes ([0b9dc5a](https://github.com/YanChenBai/veldora/commit/0b9dc5a))
+- **config:** Preserve plugin identity across isolated builds ([a6a0dc4](https://github.com/YanChenBai/veldora/commit/a6a0dc4))
+- **dev:** Forward signals and preserve Electron failure exits ([89891e3](https://github.com/YanChenBai/veldora/commit/89891e3))
+
+### 📖 Documentation
+
+- Add upstream credits and remove stale author refs ([2e0b3e3](https://github.com/YanChenBai/veldora/commit/2e0b3e3))
+
+### ❤️ Contributors
+
+- Byc ([@YanChenBai](https://github.com/YanChenBai))
+
 ## v0.0.5
 
 [compare changes](https://github.com/YanChenBai/veldora/compare/v0.0.4...v0.0.5)
